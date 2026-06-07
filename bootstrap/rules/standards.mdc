@@ -1,0 +1,38 @@
+---
+description: Shared engineering standards (architecture, PRs, testing, security, context)
+alwaysApply: true
+---
+
+# Engineering standards
+
+These standards apply to all work in this repository. They are enforced by hooks
+where possible and by review everywhere else.
+
+## Architecture
+- All reusable logic lives in the **service layer**. Do not inline domain logic in
+  controllers, route handlers, or UI components.
+- Before writing a new function, search for an existing one to reuse. Prefer extending
+  a service over duplicating logic.
+- Keep domains isolated: no cross-domain database access; communicate across bounded
+  contexts via explicit APIs or events, not shared tables.
+- Wrap external systems in an anti-corruption layer (adapter); never let a third-party
+  model leak into domain code.
+
+## Pull requests
+- Keep PRs under ~1,000 lines. If a change is larger, stop and propose a stacked-PR
+  split before writing code.
+- One feature concern per PR. Each stacked PR must build cleanly on the previous branch.
+
+## Testing
+- Tests are the definition of done. A change isn't complete until the suite is green.
+- Expand test coverage for the edge cases raised in review rather than only the happy path.
+
+## Security
+- **Never install a dependency published less than 14 days ago.** (Enforced by the
+  `dep-age-guard` hook.)
+- Prefer hardware/app-based 2FA over SMS for any account an agent can reach.
+
+## Context discipline
+- Start a fresh thread per feature. When context grows heavy (~70%), run `/handoff`
+  to persist state, then clear.
+- Plans live as markdown in `plan/` — they are for you as much as for the agent.

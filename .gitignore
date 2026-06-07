@@ -1,0 +1,4 @@
+# Generated harness packages — rebuild with build/sync.sh
+/dist/
+
+.DS_Store

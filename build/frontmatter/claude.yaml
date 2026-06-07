@@ -1,0 +1,2 @@
+# Frontmatter template for Claude Code commands/agents.
+# {{description}} and {{name}} are substituted by sync.sh.
