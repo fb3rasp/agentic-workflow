@@ -1,4 +1,5 @@
-# Generated harness packages — rebuild with build/sync.sh
-/dist/
+# Generated plugin packages (.claude-plugin/, plugins/, cursor/) are intentionally
+# COMMITTED so the plugin installs from the GitHub remote. Regenerate with
+# build/sync.sh after editing shared/, then commit the result.
 
 .DS_Store

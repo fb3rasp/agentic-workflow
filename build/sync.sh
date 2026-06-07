@@ -1,27 +1,31 @@
 #!/usr/bin/env bash
 # sync.sh — generate harness-native packages from shared/ (the single source of truth).
 #
-#   ./build/sync.sh            # build dist/claude and dist/cursor
-#   ./build/sync.sh --install  # also link into ~/.cursor and print Claude install steps
+#   ./build/sync.sh            # regenerate the committed plugin packages
+#   ./build/sync.sh --install  # also symlink the Cursor plugin + print Claude steps
 #
-# Authoring rule: edit only shared/. Never edit dist/ (it is generated & gitignored).
+# Output (TRACKED in git so the packages install from the GitHub remote):
+#   .claude-plugin/marketplace.json     Claude marketplace catalog (must be at repo root)
+#   plugins/core-workflow/              Claude plugin
+#   cursor/                             Cursor plugin (symlink into ~/.cursor/plugins/local)
+#
+# Authoring rule: edit only shared/, then run this and commit the regenerated output.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SHARED="$ROOT/shared"
-DIST="$ROOT/dist"
-CLAUDE="$DIST/claude"
-CURSOR="$DIST/cursor"
 PLUGIN_NAME="core-workflow"
 VERSION="0.1.0"
 
-rm -rf "$DIST"
-mkdir -p "$CLAUDE/.claude-plugin" \
-         "$CLAUDE/plugins/$PLUGIN_NAME/.claude-plugin" \
-         "$CLAUDE/plugins/$PLUGIN_NAME/commands" \
-         "$CLAUDE/plugins/$PLUGIN_NAME/agents" \
-         "$CLAUDE/plugins/$PLUGIN_NAME/hooks" \
+CLAUDE_PLUGIN="$ROOT/plugins/$PLUGIN_NAME"   # Claude plugin dir
+CURSOR="$ROOT/cursor"                         # Cursor plugin dir
+
+# Clean only generated paths (never shared/ build/ bootstrap/).
+rm -rf "$ROOT/.claude-plugin" "$ROOT/plugins" "$CURSOR"
+mkdir -p "$ROOT/.claude-plugin" \
+         "$CLAUDE_PLUGIN/.claude-plugin" \
+         "$CLAUDE_PLUGIN/commands" "$CLAUDE_PLUGIN/agents" "$CLAUDE_PLUGIN/hooks" \
          "$CURSOR/.cursor-plugin" \
          "$CURSOR/commands" "$CURSOR/agents" "$CURSOR/hooks" "$CURSOR/rules"
 
@@ -36,47 +40,37 @@ emit_md() { # $1=src  $2=claude_dest  $3=cursor_dest  $4=kind(command|agent)
   name="$(basename "$src" .md)"
   desc="$(desc_of "$src")"
   body="$(body_of "$src")"
-
-  # Claude
-  {
-    echo "---"
-    [ "$kind" = "agent" ] && echo "name: $name"
-    echo "description: $desc"
-    echo "---"
-    echo
-    echo "$body"
-  } > "$cdest"
-
-  # Cursor
-  {
-    echo "---"
-    [ "$kind" = "agent" ] && echo "name: $name"
-    echo "description: $desc"
-    echo "---"
-    echo
-    echo "$body"
-  } > "$udest"
+  for dest in "$cdest" "$udest"; do
+    {
+      echo "---"
+      [ "$kind" = "agent" ] && echo "name: $name"
+      echo "description: $desc"
+      echo "---"
+      echo
+      echo "$body"
+    } > "$dest"
+  done
 }
 
 echo "==> commands"
 for f in "$SHARED"/commands/*.md; do
   n="$(basename "$f")"
-  emit_md "$f" "$CLAUDE/plugins/$PLUGIN_NAME/commands/$n" "$CURSOR/commands/$n" command
+  emit_md "$f" "$CLAUDE_PLUGIN/commands/$n" "$CURSOR/commands/$n" command
 done
 
 echo "==> agents"
 for f in "$SHARED"/agents/*.md; do
   n="$(basename "$f")"
-  emit_md "$f" "$CLAUDE/plugins/$PLUGIN_NAME/agents/$n" "$CURSOR/agents/$n" agent
+  emit_md "$f" "$CLAUDE_PLUGIN/agents/$n" "$CURSOR/agents/$n" agent
 done
 
 echo "==> hooks (verbatim, executable in both)"
-cp "$SHARED"/hooks/*.sh "$CLAUDE/plugins/$PLUGIN_NAME/hooks/"
+cp "$SHARED"/hooks/*.sh "$CLAUDE_PLUGIN/hooks/"
 cp "$SHARED"/hooks/*.sh "$CURSOR/hooks/"
-chmod +x "$CLAUDE/plugins/$PLUGIN_NAME/hooks/"*.sh "$CURSOR/hooks/"*.sh
+chmod +x "$CLAUDE_PLUGIN/hooks/"*.sh "$CURSOR/hooks/"*.sh
 
 echo "==> mcp"
-cp "$SHARED/mcp.json" "$CLAUDE/plugins/$PLUGIN_NAME/.mcp.json"
+cp "$SHARED/mcp.json" "$CLAUDE_PLUGIN/.mcp.json"
 cp "$SHARED/mcp.json" "$CURSOR/mcp.json"
 
 echo "==> rule (standards) for Cursor + bootstrap"
@@ -93,7 +87,7 @@ cp "$RULE" "$CURSOR/rules/standards.mdc"
 
 echo "==> hook wiring"
 # Claude hook config (verify field names against your Claude Code version with /hooks)
-cat > "$CLAUDE/plugins/$PLUGIN_NAME/hooks/hooks.json" <<'JSON'
+cat > "$CLAUDE_PLUGIN/hooks/hooks.json" <<'JSON'
 {
   "hooks": {
     "PreToolUse": [
@@ -121,7 +115,7 @@ cat > "$CURSOR/hooks/hooks.json" <<'JSON'
 JSON
 
 echo "==> manifests"
-cat > "$CLAUDE/.claude-plugin/marketplace.json" <<JSON
+cat > "$ROOT/.claude-plugin/marketplace.json" <<JSON
 {
   "name": "agentic-workflow",
   "owner": { "name": "$(git -C "$ROOT" config user.name 2>/dev/null || echo "you")" },
@@ -134,16 +128,17 @@ cat > "$CLAUDE/.claude-plugin/marketplace.json" <<JSON
   ]
 }
 JSON
-cat > "$CLAUDE/plugins/$PLUGIN_NAME/.claude-plugin/plugin.json" <<JSON
+cat > "$CLAUDE_PLUGIN/.claude-plugin/plugin.json" <<JSON
 { "name": "$PLUGIN_NAME", "version": "$VERSION", "description": "Agentic SDLC workflow commands, agents, and hooks." }
 JSON
 cat > "$CURSOR/.cursor-plugin/plugin.json" <<JSON
 { "name": "agentic-workflow", "version": "$VERSION", "description": "Agentic SDLC workflow commands, agents, hooks, and rules." }
 JSON
 
-echo "==> done. Built:"
-echo "    $CLAUDE"
-echo "    $CURSOR"
+echo "==> done. Generated (tracked):"
+echo "    .claude-plugin/marketplace.json"
+echo "    plugins/$PLUGIN_NAME/   (Claude)"
+echo "    cursor/                 (Cursor)"
 
 if [ "${1:-}" = "--install" ]; then
   echo "==> linking Cursor plugin into ~/.cursor/plugins/local"
@@ -152,7 +147,7 @@ if [ "${1:-}" = "--install" ]; then
   ln -s "$CURSOR" "$HOME/.cursor/plugins/local/agentic-workflow"
   echo "    linked. Reload Cursor (Developer: Reload Window)."
   echo
-  echo "==> Claude Code: add this marketplace, then install the plugin:"
-  echo "    /plugin marketplace add $CLAUDE"
+  echo "==> Claude Code: add the marketplace (from GitHub once pushed), then install:"
+  echo "    /plugin marketplace add fb3rasp/agentic-workflow"
   echo "    /plugin install $PLUGIN_NAME@agentic-workflow"
 fi

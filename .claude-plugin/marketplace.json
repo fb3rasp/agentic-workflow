@@ -1,0 +1,11 @@
+{
+  "name": "agentic-workflow",
+  "owner": { "name": "Rainer Spittel" },
+  "plugins": [
+    {
+      "name": "core-workflow",
+      "source": "./plugins/core-workflow",
+      "description": "Agentic SDLC workflow: discovery, planning, decomposition, review loop, architecture docs."
+    }
+  ]
+}
