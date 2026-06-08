@@ -3,13 +3,91 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project
-<!-- One-line description of what this project is. -->
+<!-- One line — what this repo is, e.g. "Roster CLI service — manages team rosters." -->
+**[TODO: one-line project description]**
+
+## Current work
+<!-- Update at the start of each feature thread. Archive or delete when the feature ships. -->
+
+| | |
+|---|---|
+| **Feature** | `[TODO: slug]` — e.g. `roster-service` |
+| **Plan** | `plan/[slug].md` — e.g. `@plan/roster-service.md` |
+| **Handoff** | `plan/[slug].handoff.md` (when resuming a cleared thread) |
+| **Status** | `[TODO]` — e.g. decomposed, building PR 2 of 4 |
+
+## Stacked PRs
+<!-- Fill in after `/decompose`. Delete this section when the feature merges. -->
+
+| # | Branch | Status | Scope |
+|---|---|---|---|
+| 1 | `[prefix]/01-scaffold` | `[TODO]` | e.g. `roster/01-scaffold` — project layout, CI |
+| 2 | `[prefix]/02-…` | `[TODO]` | |
+| 3 | `[prefix]/03-…` | `[TODO]` | |
 
 ## Workflow
 This repo uses the agentic-workflow plugin. Typical loop:
-`/discover` → `/plan-feature` → `/decompose` → build → `/code-structure` → `/review-loop`.
-Use `/document-architecture` to produce/update `docs/architecture/`.
-Use `/handoff` before clearing a heavy thread.
+
+```
+/discover → /plan-feature → /decompose → build → /code-structure → /review-loop
+                                                        ↘ /document-architecture
+                                                        ↘ /architecture-review
+                                                        ↘ /handoff (before clearing)
+```
+
+Use `/architecture-review` after `/document-architecture` (or once `docs/architecture/` exists)
+to flag drift in a diff against the documented architecture.
+
+| Command | Phase | Does |
+|---|---|---|
+| `/discover` | Discovery | Build shared understanding; refuses to code |
+| `/plan-feature` | Plan | Write a risk-first plan to `plan/<feature>.md` |
+| `/decompose` | Plan | Split a plan into stacked PRs (<1,000 lines each) |
+| `/code-structure` | Build | Dedupe → service layer; enforce domain isolation |
+| `/review-loop` | Review | Review → fix → re-test until clean and green |
+| `/document-architecture` | Any | C4 L1/L2/L3 + deployment, integrations, data flow |
+| `/architecture-review` | Review | Flag drift in a diff vs. `docs/architecture/` |
+| `/handoff` | Any | Persist context to disk before clearing a thread |
+
+Slash commands require the plugin (see the agentic-workflow README). Command definitions
+are also available on disk:
+- **In-repo (after bootstrap):** `.cursor/commands/<name>.md` — symlinks for browsing
+  and `@` includes below.
+- **Installed plugin:** `~/.cursor/plugins/local/agentic-workflow/commands/<name>.md`
+  (Cursor, after `build/sync.sh --install`) or the plugin's `commands/` dir in Claude Code.
+- **Plugin root (link-back):** `.cursor/agentic-workflow-plugin/` — symlinked by bootstrap.
+
+## Commands
+
+@.cursor/commands/discover.md
+@.cursor/commands/plan-feature.md
+@.cursor/commands/decompose.md
+@.cursor/commands/code-structure.md
+@.cursor/commands/review-loop.md
+@.cursor/commands/document-architecture.md
+@.cursor/commands/architecture-review.md
+@.cursor/commands/handoff.md
+
+## Agents
+The plugin provides three subagents (`planner`, `researcher`, `reviewer`) for
+specialised work. See `AGENTS.md` for when to use each and their prompt definitions
+(symlinked at `.cursor/agents/` after bootstrap).
+
+## Hooks
+Three guardrails (`dep-age-guard`, `format-changed`, `run-tests`) run automatically from
+the **installed plugin** — not from this repo. See `HOOKS.md` for when each fires and
+what it does. Script sources and wiring are symlinked under `.cursor/hooks/` for
+reference only.
+
+## MCP
+The plugin ships a GitHub MCP server config (`github`). It loads from the **installed
+plugin**, not this repo. See `MCP.md` for servers, required env vars, and the reference
+symlink at `.cursor/agentic-workflow-mcp.json`.
+
+## Not in this plugin
+Cursor skills (`~/.cursor/skills-cursor/`) are a separate system — not symlinked or
+referenced here. This workflow uses plugin **commands**, **agents**, **hooks**, and **MCP**
+only.
 
 ## Standards
 <!-- The engineering standards below are shared across all repos. -->
