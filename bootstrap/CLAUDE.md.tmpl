@@ -32,6 +32,7 @@ This repo uses the agentic-workflow plugin. Typical loop:
 /discover → /plan-feature → /decompose → build → /code-structure → /review-loop
                                                         ↘ /document-architecture
                                                         ↘ /architecture-review
+                                                        ↘ /create-pr → /review-pr → /pr-review-loop
                                                         ↘ /handoff (before clearing)
 ```
 
@@ -45,6 +46,9 @@ to flag drift in a diff against the documented architecture.
 | `/decompose` | Plan | Split a plan into stacked PRs (<1,000 lines each) |
 | `/code-structure` | Build | Dedupe → service layer; enforce domain isolation |
 | `/review-loop` | Review | Review → fix → re-test until clean and green |
+| `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
+| `/review-pr` | Review | Score PR 0–5 (min of 8 dims); post PR comment |
+| `/pr-review-loop` | Review | Confirm each iteration; fix, push, re-review until 5/5 or cap |
 | `/document-architecture` | Any | C4 L1/L2/L3 + deployment, integrations, data flow |
 | `/architecture-review` | Review | Flag drift in a diff vs. `docs/architecture/` |
 | `/handoff` | Any | Persist context to disk before clearing a thread |
@@ -64,12 +68,15 @@ are also available on disk:
 @.cursor/commands/decompose.md
 @.cursor/commands/code-structure.md
 @.cursor/commands/review-loop.md
+@.cursor/commands/create-pr.md
+@.cursor/commands/review-pr.md
+@.cursor/commands/pr-review-loop.md
 @.cursor/commands/document-architecture.md
 @.cursor/commands/architecture-review.md
 @.cursor/commands/handoff.md
 
 ## Agents
-The plugin provides three subagents (`planner`, `researcher`, `reviewer`) for
+The plugin provides subagents (`planner`, `researcher`, `reviewer`, `pr-reviewer`) for
 specialised work. See `AGENTS.md` for when to use each and their prompt definitions
 (symlinked at `.cursor/agents/` after bootstrap).
 

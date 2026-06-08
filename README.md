@@ -14,6 +14,7 @@ HOOKS.md, MCP.md, rules, plan folder, PR template) is dropped into each repo by
 /discover  →  /plan-feature  →  /decompose  →  build  →  /code-structure  →  /review-loop
                                                         ↘ /document-architecture
                                                         ↘ /architecture-review
+                                                        ↘ /create-pr → /review-pr → /pr-review-loop
                                                         ↘ /handoff (before clearing)
 ```
 
@@ -24,11 +25,14 @@ HOOKS.md, MCP.md, rules, plan folder, PR template) is dropped into each repo by
 | `/decompose` | Plan | Splits a plan into stacked PRs (<1,000 lines each) |
 | `/code-structure` | Build | Dedupe → service layer; enforces domain isolation |
 | `/review-loop` | Review | review → fix → re-test until clean + green |
+| `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
+| `/review-pr` | Review | Score PR 0–5 (min of 8 dims); post PR comment |
+| `/pr-review-loop` | Review | Confirm each iteration; fix, push, re-review until 5/5 or cap |
 | `/document-architecture` | Any | C4 L1/L2/L3 + deployment, integrations, data flow, domains |
 | `/architecture-review` | Review | Flags drift in a diff vs. `docs/architecture/` |
 | `/handoff` | Any | Persists context to disk before clearing a heavy thread |
 
-Subagents: `planner`, `researcher`, `reviewer`.
+Subagents: `planner`, `researcher`, `reviewer`, `pr-reviewer`.
 Hooks: `dep-age-guard` (block deps <14 days), `run-tests` (on stop), `format-changed` (on edit).
 
 ## Not part of this repo

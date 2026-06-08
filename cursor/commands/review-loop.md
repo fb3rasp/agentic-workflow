@@ -14,3 +14,6 @@ Run an autonomous review-and-fix loop on the current change (or referenced PR).
    summarise what remains and ask the operator.
 
 Report each iteration's findings and the final state.
+
+**GitHub PR review:** For scored PR review on GitHub (0–5, eight dimensions, PR comments),
+use `/create-pr` → `/review-pr` or `/pr-review-loop` after this local loop passes.
