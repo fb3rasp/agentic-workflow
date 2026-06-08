@@ -1,0 +1,20 @@
+# AGENTS.md
+
+Subagent definitions for the agentic-workflow plugin. Invoke these from the harness
+(subagent picker or Task tool) to keep the main thread focused.
+
+Definitions are symlinked into `.cursor/agents/` by `bootstrap/install.sh` (source:
+`~/.cursor/plugins/local/agentic-workflow/agents/`, or the clone's `cursor/agents/`
+when the local plugin is not installed yet).
+
+| Agent | Use when |
+|---|---|
+| **planner** | A risk-first implementation roadmap is needed in isolation (e.g. during `/plan-feature`) |
+| **researcher** | Library or API research would bloat the main thread |
+| **reviewer** | A findings-only code review is needed before fixing (e.g. during `/review-loop`) |
+
+## Definitions
+
+@.cursor/agents/planner.md
+@.cursor/agents/researcher.md
+@.cursor/agents/reviewer.md

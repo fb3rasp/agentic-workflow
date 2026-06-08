@@ -1,0 +1,25 @@
+# MCP.md
+
+Model Context Protocol servers bundled with the agentic-workflow plugin. **MCP config is
+plugin-global** — it loads from the installed plugin, not from this project. Do not add
+a project-local `.cursor/mcp.json` expecting the plugin servers to merge with it (add
+project-specific servers in Cursor/Claude settings separately if needed).
+
+After bootstrap, a read-only symlink is at `.cursor/agentic-workflow-mcp.json` for
+browsing the plugin config.
+
+| Location | Path |
+|---|---|
+| Cursor plugin (active) | `~/.cursor/plugins/local/agentic-workflow/mcp.json` |
+| Claude Code plugin (active) | plugin `.mcp.json` (via `/plugin install`) |
+| In-repo (reference) | `.cursor/agentic-workflow-mcp.json` — symlink only |
+
+## Servers
+
+| Server | Purpose | Env required |
+|---|---|---|
+| `github` | GitHub API (issues, PRs, repos) via `@modelcontextprotocol/server-github` | `GITHUB_PERSONAL_ACCESS_TOKEN` |
+
+Set the token in your shell or harness MCP settings before using GitHub MCP tools.
+
+Override the symlink source with `AGENTIC_WORKFLOW_MCP=/path/to/mcp.json` if needed.

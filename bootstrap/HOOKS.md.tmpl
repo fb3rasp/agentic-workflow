@@ -1,0 +1,50 @@
+# HOOKS.md
+
+Automated guardrails from the agentic-workflow plugin. **Hooks execute from the
+installed plugin**, not from this project — do not add a project-local
+`.cursor/hooks/hooks.json` expecting it to run.
+
+After bootstrap, `.cursor/hooks/` contains **read-only symlinks** for browsing script
+sources and wiring. The active config is always the plugin copy.
+
+| Location | Path |
+|---|---|
+| Cursor plugin (active) | `~/.cursor/plugins/local/agentic-workflow/hooks/` |
+| Claude Code plugin (active) | plugin `hooks/` dir (via `/plugin install`) |
+| In-repo (reference) | `.cursor/hooks/` — symlinks only |
+
+## What runs when
+
+| Script | Cursor event | Claude Code event | Effect |
+|---|---|---|---|
+| `dep-age-guard.sh` | `beforeShellExecution` | `PreToolUse` (Bash) | Blocks `npm`/`pnpm`/`yarn`/`bun`/`pip` installs of packages published <14 days ago |
+| `format-changed.sh` | `afterFileEdit` | `PostToolUse` (Edit\|Write) | Best-effort Prettier on the edited file; never fails the turn |
+| `run-tests.sh` | `stop` | `Stop` | Runs the project test suite (npm/pnpm/yarn/bun/pytest); must be green before done |
+
+## Wiring (reference)
+
+Cursor (`hooks.json`):
+
+```json
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [ { "command": "./hooks/dep-age-guard.sh" } ],
+    "afterFileEdit":        [ { "command": "./hooks/format-changed.sh" } ],
+    "stop":                 [ { "command": "./hooks/run-tests.sh" } ]
+  }
+}
+```
+
+Claude Code uses `PreToolUse` / `PostToolUse` / `Stop` with `${CLAUDE_PLUGIN_ROOT}/hooks/…`
+paths — see the plugin's `hooks/hooks.json`.
+
+A symlink to the Cursor wiring is at `.cursor/hooks/hooks.json`.
+
+## Scripts (symlinked)
+
+- `.cursor/hooks/dep-age-guard.sh`
+- `.cursor/hooks/format-changed.sh`
+- `.cursor/hooks/run-tests.sh`
+
+Override the symlink source with `AGENTIC_WORKFLOW_HOOKS=/path/to/hooks` if needed.
