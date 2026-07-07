@@ -9,13 +9,22 @@
 #      .cursor/ for browsing, and links .cursor/agentic-workflow-plugin → plugin root.
 #
 # Copies (without overwriting): CLAUDE.md, AGENTS.md, HOOKS.md, MCP.md,
-# .cursor/rules/standards.mdc, .github/pull_request_template.md, plan/.
-# Symlinks (reference; hooks/MCP execute from plugin): .cursor/commands/,
+# .cursor/rules/standards.mdc, .github/pull_request_template.md, plan/,
+# .claude/settings.json (hook wiring), .mcp.json (project-root MCP for Claude Code).
+#
+# Cursor symlinks (reference; hooks/MCP execute from plugin): .cursor/commands/,
 # .cursor/agents/, .cursor/hooks/, .cursor/agentic-workflow-mcp.json,
 # .cursor/agentic-workflow-plugin/.
 #
-# Plugin source resolution: $AGENTIC_WORKFLOW_PLUGIN → installed Cursor plugin →
-# agentic-workflow clone's cursor/ dir. Exits non-zero if no plugin source is found.
+# Claude Code symlinks (ACTIVE — Claude Code loads these natively, no plugin
+# install needed): .claude/commands/<namespace>/ (default "engineer" →
+# /engineer:discover etc.; override with AGENTIC_WORKFLOW_NAMESPACE),
+# .claude/agents/, .claude/hooks/*.sh, .claude/agentic-workflow-plugin/.
+#
+# Cursor plugin source resolution: $AGENTIC_WORKFLOW_PLUGIN → installed Cursor
+# plugin → clone's cursor/ dir. Claude plugin source resolution:
+# $AGENTIC_WORKFLOW_CLAUDE_PLUGIN → clone's plugins/core-workflow/ dir.
+# Exits non-zero if no plugin source is found.
 
 set -euo pipefail
 
@@ -26,6 +35,10 @@ TARGET="${1:-}"
 
 PLUGIN_FOUND=0
 LINKS_CREATED=0
+
+# Claude Code command namespace: .claude/commands/<ns>/discover.md → /<ns>:discover.
+# Typing "/<ns>" in Claude Code tab-completes the whole command group.
+CLAUDE_NS="${AGENTIC_WORKFLOW_NAMESPACE:-engineer}"
 
 copy_safe() { # $1=src $2=dest
   if [ -e "$2" ]; then echo "  skip (exists): $2"; else
@@ -54,6 +67,18 @@ resolve_plugin_root() {
     root="$HOME/.cursor/plugins/local/agentic-workflow"
   elif [ -f "$BOOT/../cursor/.cursor-plugin/plugin.json" ]; then
     root="$BOOT/../cursor"
+  fi
+  [ -n "$root" ] && echo "$(cd "$root" && pwd)" || echo ""
+}
+
+# Claude plugin root: env override → clone's plugins/core-workflow.
+# (The marketplace cache path is version-hashed and breaks on update — prefer the clone.)
+resolve_claude_plugin_root() {
+  local root=""
+  if [ -n "${AGENTIC_WORKFLOW_CLAUDE_PLUGIN:-}" ] && [ -d "$AGENTIC_WORKFLOW_CLAUDE_PLUGIN" ]; then
+    root="$AGENTIC_WORKFLOW_CLAUDE_PLUGIN"
+  elif [ -f "$BOOT/../plugins/core-workflow/.claude-plugin/plugin.json" ]; then
+    root="$BOOT/../plugins/core-workflow"
   fi
   [ -n "$root" ] && echo "$(cd "$root" && pwd)" || echo ""
 }
@@ -153,9 +178,111 @@ link_plugin_mcp() { # $1=target repo
   link_safe "$src" "$target/.cursor/agentic-workflow-mcp.json"
 }
 
+# --- Claude Code (native project-level defs under .claude/) -------------------
+
+link_claude_root() { # $1=target repo
+  local target="$1" root
+  root="$(resolve_claude_plugin_root)"
+  [ -z "$root" ] && return 0
+  mkdir -p "$target/.claude"
+  link_safe "$root" "$target/.claude/agentic-workflow-plugin"
+}
+
+link_claude_md() { # $1=target  $2=plugin subdir (commands|agents)  $3=dest subdir under .claude/
+  local target="$1" subdir="$2" dest="$3" root f
+  root="$(resolve_claude_plugin_root)"
+  if [ -z "$root" ] || [ ! -d "$root/$subdir" ]; then
+    echo "  warn: Claude plugin $subdir not found — skipping .claude/$dest" >&2
+    return 0
+  fi
+  mkdir -p "$target/.claude/$dest"
+  for f in "$root/$subdir"/*.md; do
+    [ -f "$f" ] || continue
+    link_safe "$f" "$target/.claude/$dest/$(basename "$f")"
+  done
+}
+
+prune_flat_claude_commands() { # $1=target — remove pre-namespace flat command links
+  local target="$1" root f
+  root="$(resolve_claude_plugin_root)"
+  [ -z "$root" ] && return 0
+  for f in "$target/.claude/commands"/*.md; do
+    [ -L "$f" ] || continue
+    case "$(readlink "$f")" in
+      "$root/commands/"*) rm "$f"; echo "  removed (moved to $CLAUDE_NS/): $f" ;;
+    esac
+  done
+}
+
+link_claude_hooks() { # $1=target repo — scripts only; wiring lives in .claude/settings.json
+  local target="$1" root f
+  root="$(resolve_claude_plugin_root)"
+  if [ -z "$root" ] || [ ! -d "$root/hooks" ]; then
+    echo "  warn: Claude plugin hooks not found — skipping .claude/hooks" >&2
+    return 0
+  fi
+  mkdir -p "$target/.claude/hooks"
+  for f in "$root/hooks"/*.sh; do
+    [ -f "$f" ] || continue
+    link_safe "$f" "$target/.claude/hooks/$(basename "$f")"
+  done
+}
+
+write_claude_settings() { # $1=target repo — hook wiring; never overwrites
+  local target="$1" dest
+  dest="$target/.claude/settings.json"
+  if [ -e "$dest" ]; then
+    echo "  skip (exists): $dest — merge the hooks wiring from HOOKS.md if not present"
+    return 0
+  fi
+  mkdir -p "$target/.claude"
+  cat > "$dest" <<'JSON'
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dep-age-guard.sh" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write", "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-changed.sh" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/run-tests.sh" } ] }
+    ]
+  }
+}
+JSON
+  echo "  added: $dest"
+}
+
+copy_claude_mcp() { # $1=target repo — Claude Code reads .mcp.json at the project root
+  local target="$1" root
+  root="$(resolve_claude_plugin_root)"
+  if [ -z "$root" ] || [ ! -f "$root/.mcp.json" ]; then
+    echo "  warn: Claude plugin .mcp.json not found — skipping .mcp.json" >&2
+    return 0
+  fi
+  copy_safe "$root/.mcp.json" "$target/.mcp.json"
+}
+
+verify_claude_plugin() {
+  local root
+  root="$(resolve_claude_plugin_root)"
+  if [ -z "$root" ]; then
+    echo "  ERROR: Claude plugin source not found." >&2
+    echo "  Run from an agentic-workflow clone (plugins/core-workflow must exist —" >&2
+    echo "  regenerate with ./build/sync.sh), or set" >&2
+    echo "  AGENTIC_WORKFLOW_CLAUDE_PLUGIN=/path/to/plugins/core-workflow" >&2
+    return 1
+  fi
+  echo "  claude plugin root: $root"
+  return 0
+}
+
 echo "Bootstrapping $TARGET"
 echo "==> plugin"
 verify_plugin || PLUGIN_FOUND=0
+CLAUDE_PLUGIN_FOUND=1
+verify_claude_plugin || CLAUDE_PLUGIN_FOUND=0
 
 echo "==> copy"
 copy_safe "$BOOT/CLAUDE.md.tmpl"           "$TARGET/CLAUDE.md"
@@ -168,19 +295,37 @@ mkdir -p "$TARGET/plan"
 [ -e "$TARGET/plan/.gitkeep" ] || touch "$TARGET/plan/.gitkeep"
 echo "  ensured: $TARGET/plan/"
 
-echo "==> link (reference → plugin; hooks/MCP execute from plugin, not project)"
+echo "==> link Cursor (reference → plugin; hooks/MCP execute from plugin, not project)"
 link_plugin_root "$TARGET"
 link_plugin_md "$TARGET" commands AGENTIC_WORKFLOW_COMMANDS "commands"
 link_plugin_md "$TARGET" agents   AGENTIC_WORKFLOW_AGENTS   "agents"
 link_plugin_hooks "$TARGET"
 link_plugin_mcp "$TARGET"
 
+echo "==> link Claude Code (ACTIVE — loads natively from .claude/, no plugin install needed)"
+link_claude_root "$TARGET"
+prune_flat_claude_commands "$TARGET"
+link_claude_md "$TARGET" commands "commands/$CLAUDE_NS"
+link_claude_md "$TARGET" agents   agents
+link_claude_hooks "$TARGET"
+write_claude_settings "$TARGET"
+copy_claude_mcp "$TARGET"
+
 echo
-if [ "$PLUGIN_FOUND" -eq 0 ]; then
-  echo "FAILED: plugin not installed — symlinks skipped. Complete README step 1, then re-run:" >&2
+if [ "$PLUGIN_FOUND" -eq 0 ] && [ "$CLAUDE_PLUGIN_FOUND" -eq 0 ]; then
+  echo "FAILED: no plugin source found — symlinks skipped. Complete README step 1, then re-run:" >&2
   echo "  ./bootstrap/install.sh $TARGET" >&2
   exit 1
 fi
+[ "$PLUGIN_FOUND" -eq 0 ] && echo "warn: Cursor plugin missing — .cursor/ links skipped (see README step 1)." >&2
+[ "$CLAUDE_PLUGIN_FOUND" -eq 0 ] && echo "warn: Claude plugin source missing — .claude/ links skipped." >&2
 
-echo "Done. Project links back to plugin at .cursor/agentic-workflow-plugin"
-echo "Slash commands, agents, hooks, and MCP load from that plugin — reload Cursor/Claude if just installed."
+echo "Done."
+echo "  Cursor:      commands/agents/hooks/MCP execute from the installed plugin;"
+echo "               .cursor/ holds reference symlinks + plugin link-back."
+echo "  Claude Code: commands load from .claude/commands/$CLAUDE_NS/ — type /$CLAUDE_NS and"
+echo "               tab to browse (/$CLAUDE_NS:discover, /$CLAUDE_NS:plan-feature, ...)."
+echo "               Agents load from .claude/agents/, hooks run via .claude/settings.json,"
+echo "               MCP from ./.mcp.json — no /plugin install required. Restart claude to pick up."
+echo "  NOTE: if you ALSO installed core-workflow via /plugin install, uninstall it or skip"
+echo "        the .claude/ links — otherwise commands and hooks run twice."

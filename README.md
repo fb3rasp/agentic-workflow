@@ -5,7 +5,8 @@ Cursor** from a single source of truth.
 
 You author once in `shared/`; `build/sync.sh` generates a native Claude Code plugin
 marketplace and a native Cursor plugin. Per-project scaffolding (CLAUDE.md, AGENTS.md,
-HOOKS.md, MCP.md, rules, plan folder, PR template) is dropped into each repo by
+HOOKS.md, MCP.md, rules, plan folder, PR template, plus an **active** `.claude/` setup —
+commands, agents, hooks, MCP — for Claude Code CLI) is dropped into each repo by
 `bootstrap/install.sh`.
 
 ## The workflow
@@ -66,18 +67,17 @@ cursor/                  # Cursor plugin (commands, agents, hooks, rules, mcp.js
 
 ## Setup
 
-Two steps: install the **plugin** once per machine, then **bootstrap** each project.
-Bootstrap symlinks `.cursor/*` back to the plugin so the project can browse defs and
-`CLAUDE.md` `@` includes resolve — but slash commands, hooks, and MCP still **execute
-from the installed plugin**.
+Two steps: install the **plugin** once per machine (Cursor only — Claude Code needs no
+plugin install for the bootstrap path), then **bootstrap** each project.
+
+The harnesses differ in where things execute:
+- **Claude Code:** bootstrap provisions a **native, active** `.claude/` setup —
+  commands, agents, hooks (wired via `.claude/settings.json`), and a project-root
+  `.mcp.json`. Everything runs from the project; no `/plugin install` required.
+- **Cursor:** bootstrap symlinks `.cursor/*` back to the plugin for browsing, but slash
+  commands, hooks, and MCP still **execute from the installed plugin**.
 
 ### Step 1 — Install the plugin (once per machine)
-
-**Claude Code** (from GitHub remote):
-```
-/plugin marketplace add fb3rasp/agentic-workflow
-/plugin install core-workflow@agentic-workflow
-```
 
 **Cursor** (local symlink from a clone):
 ```bash
@@ -86,6 +86,15 @@ git clone …/agentic-workflow && cd agentic-workflow
                               # then Developer: Reload Window
 ```
 (Cursor team marketplaces need Teams/Enterprise; personal use is the local symlink path.)
+
+**Claude Code** — nothing to install; bootstrap links defs from the clone's
+`plugins/core-workflow/`. The marketplace route still works as an *alternative*:
+```
+/plugin marketplace add fb3rasp/agentic-workflow
+/plugin install core-workflow@agentic-workflow
+```
+> Pick **one** Claude Code route per project — plugin *or* bootstrap `.claude/` links.
+> Running both duplicates commands and fires every hook twice.
 
 ### Step 2 — Bootstrap each project
 
@@ -97,29 +106,46 @@ git clone …/agentic-workflow && cd agentic-workflow
 
 | File | Purpose |
 |---|---|
-| `CLAUDE.md` | Project + workflow context, `@` command includes |
+| `CLAUDE.md` | Project + workflow context |
 | `AGENTS.md` | Subagent defs and usage |
 | `HOOKS.md` | Hook schedule (reference) |
 | `MCP.md` | MCP servers (reference) |
+| `.claude/settings.json` | Claude Code hook wiring (**active**) |
+| `.mcp.json` | Claude Code MCP servers (**active**) |
 | `.cursor/rules/standards.mdc` | Engineering standards rule |
 | `.github/pull_request_template.md` | PR template |
 | `plan/` | Feature plans and handoffs |
 
-**Symlinked** (reference → plugin; re-run safe):
+**Symlinked** (re-run safe):
 
-| Project path | Points to |
-|---|---|
-| `.cursor/agentic-workflow-plugin/` | Plugin root (project link-back) |
-| `.cursor/commands/*.md` | Plugin slash-command prompts |
-| `.cursor/agents/*.md` | Plugin subagent prompts |
-| `.cursor/hooks/*` | Plugin hook scripts + `hooks.json` |
-| `.cursor/agentic-workflow-mcp.json` | Plugin MCP config |
+| Project path | Points to | Role |
+|---|---|---|
+| `.claude/commands/engineer/*.md` | Claude plugin slash-command prompts | **active** |
+| `.claude/agents/*.md` | Claude plugin subagent prompts | **active** |
+| `.claude/hooks/*.sh` | Claude plugin hook scripts | **active** |
+| `.claude/agentic-workflow-plugin/` | Claude plugin root (link-back) | reference |
+| `.cursor/commands/*.md` | Cursor plugin slash-command prompts | reference |
+| `.cursor/agents/*.md` | Cursor plugin subagent prompts | reference |
+| `.cursor/hooks/*` | Cursor plugin hook scripts + `hooks.json` | reference |
+| `.cursor/agentic-workflow-mcp.json` | Cursor plugin MCP config | reference |
+| `.cursor/agentic-workflow-plugin/` | Cursor plugin root (link-back) | reference |
 
-`install.sh` **verifies** the plugin is installed (or falls back to the clone's
-`cursor/` dir) and exits non-zero if neither is found. Override with
-`AGENTIC_WORKFLOW_PLUGIN=/path/to/plugin-root` or per-subdir env vars
-(`AGENTIC_WORKFLOW_COMMANDS`, `AGENTIC_WORKFLOW_AGENTS`, `AGENTIC_WORKFLOW_HOOKS`,
-`AGENTIC_WORKFLOW_MCP`).
+In Claude Code the commands are **namespaced**: typing `/engineer` tab-completes the
+whole group (`/engineer:discover`, `/engineer:plan-feature`, `/engineer:decompose`, …).
+Override the namespace with `AGENTIC_WORKFLOW_NAMESPACE=<name>` when running
+`install.sh` (re-running migrates old flat `.claude/commands/*.md` links into the
+namespace dir). Cursor commands stay unnamespaced (`/discover`, …).
+
+`install.sh` **verifies** a plugin source exists and exits non-zero if none is found.
+Cursor resolution: `AGENTIC_WORKFLOW_PLUGIN` → installed local plugin → clone's
+`cursor/` dir; per-subdir overrides `AGENTIC_WORKFLOW_COMMANDS`, `AGENTIC_WORKFLOW_AGENTS`,
+`AGENTIC_WORKFLOW_HOOKS`, `AGENTIC_WORKFLOW_MCP`. Claude Code resolution:
+`AGENTIC_WORKFLOW_CLAUDE_PLUGIN` → clone's `plugins/core-workflow/` dir.
+
+> The `.claude/` symlinks point into your local clone — keep the clone around (or set
+> `AGENTIC_WORKFLOW_CLAUDE_PLUGIN`), and re-run `sync.sh` after editing `shared/` so
+> linked projects pick up changes. If teammates don't share the clone path, gitignore
+> the symlinked entries and have each machine run bootstrap.
 
 After editing anything in `shared/`: re-run `./build/sync.sh` and **commit the
 regenerated `.claude-plugin/`, `plugins/`, and `cursor/` output**.

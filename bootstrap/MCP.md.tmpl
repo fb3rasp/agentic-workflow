@@ -1,18 +1,21 @@
 # MCP.md
 
-Model Context Protocol servers bundled with the agentic-workflow plugin. **MCP config is
-plugin-global** — it loads from the installed plugin, not from this project. Do not add
-a project-local `.cursor/mcp.json` expecting the plugin servers to merge with it (add
-project-specific servers in Cursor/Claude settings separately if needed).
+Model Context Protocol servers bundled with the agentic-workflow plugin. Where the
+config loads from differs per harness:
 
-After bootstrap, a read-only symlink is at `.cursor/agentic-workflow-mcp.json` for
-browsing the plugin config.
+- **Claude Code:** `.mcp.json` at the **project root** (copied by bootstrap). Claude
+  Code reads it natively; approve the servers on first use. Add project-specific
+  servers directly to this file.
+- **Cursor:** MCP config is **plugin-global** — it loads from the installed plugin, not
+  from this project. Do not add a project-local `.cursor/mcp.json` expecting the plugin
+  servers to merge with it. A read-only symlink is at `.cursor/agentic-workflow-mcp.json`
+  for browsing.
 
 | Location | Path |
 |---|---|
+| Claude Code (active) | `.mcp.json` at project root |
 | Cursor plugin (active) | `~/.cursor/plugins/local/agentic-workflow/mcp.json` |
-| Claude Code plugin (active) | plugin `.mcp.json` (via `/plugin install`) |
-| In-repo (reference) | `.cursor/agentic-workflow-mcp.json` — symlink only |
+| Cursor in-repo (reference) | `.cursor/agentic-workflow-mcp.json` — symlink only |
 
 ## Servers
 
