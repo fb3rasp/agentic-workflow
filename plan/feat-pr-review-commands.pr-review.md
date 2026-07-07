@@ -1,0 +1,11 @@
+# PR review state
+- feature: feat-pr-review-commands
+- pr: 2
+- url: https://github.com/fb3rasp/agentic-workflow/pull/2
+- branch: feat/pr-review-commands
+- base: master
+- iteration: 0
+- last_overall: null
+- last_dimensions: {}
+- mode: confirm
+- history: []

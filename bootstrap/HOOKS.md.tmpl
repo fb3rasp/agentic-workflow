@@ -1,17 +1,19 @@
 # HOOKS.md
 
-Automated guardrails from the agentic-workflow plugin. **Hooks execute from the
-installed plugin**, not from this project — do not add a project-local
-`.cursor/hooks/hooks.json` expecting it to run.
+Automated guardrails from the agentic-workflow plugin. Where they execute differs
+per harness:
 
-After bootstrap, `.cursor/hooks/` contains **read-only symlinks** for browsing script
-sources and wiring. The active config is always the plugin copy.
+- **Claude Code:** hooks run **from this project** — scripts are symlinked at
+  `.claude/hooks/` and wired in `.claude/settings.json` (both created by bootstrap).
+- **Cursor:** hooks execute **from the installed plugin**, not from this project — do
+  not add a project-local `.cursor/hooks/hooks.json` expecting it to run.
+  `.cursor/hooks/` contains read-only symlinks for browsing only.
 
 | Location | Path |
 |---|---|
+| Claude Code (active) | `.claude/hooks/*.sh` + `.claude/settings.json` |
 | Cursor plugin (active) | `~/.cursor/plugins/local/agentic-workflow/hooks/` |
-| Claude Code plugin (active) | plugin `hooks/` dir (via `/plugin install`) |
-| In-repo (reference) | `.cursor/hooks/` — symlinks only |
+| Cursor in-repo (reference) | `.cursor/hooks/` — symlinks only |
 
 ## What runs when
 
@@ -23,7 +25,26 @@ sources and wiring. The active config is always the plugin copy.
 
 ## Wiring (reference)
 
-Cursor (`hooks.json`):
+Claude Code (`.claude/settings.json` — written by bootstrap if absent; merge this
+block manually if you already had a settings file):
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dep-age-guard.sh" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write", "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-changed.sh" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/run-tests.sh" } ] }
+    ]
+  }
+}
+```
+
+Cursor (`hooks.json`, lives in the plugin):
 
 ```json
 {
@@ -36,15 +57,12 @@ Cursor (`hooks.json`):
 }
 ```
 
-Claude Code uses `PreToolUse` / `PostToolUse` / `Stop` with `${CLAUDE_PLUGIN_ROOT}/hooks/…`
-paths — see the plugin's `hooks/hooks.json`.
-
 A symlink to the Cursor wiring is at `.cursor/hooks/hooks.json`.
 
 ## Scripts (symlinked)
 
-- `.cursor/hooks/dep-age-guard.sh`
-- `.cursor/hooks/format-changed.sh`
-- `.cursor/hooks/run-tests.sh`
+- `.claude/hooks/` and `.cursor/hooks/`: `dep-age-guard.sh`, `format-changed.sh`,
+  `run-tests.sh`
 
-Override the symlink source with `AGENTIC_WORKFLOW_HOOKS=/path/to/hooks` if needed.
+Override the symlink source with `AGENTIC_WORKFLOW_HOOKS=/path/to/hooks` (Cursor) or
+`AGENTIC_WORKFLOW_CLAUDE_PLUGIN=/path/to/plugins/core-workflow` (Claude Code) if needed.

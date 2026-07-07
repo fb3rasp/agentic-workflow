@@ -3,18 +3,22 @@
 Subagent definitions for the agentic-workflow plugin. Invoke these from the harness
 (subagent picker or Task tool) to keep the main thread focused.
 
-Definitions are symlinked into `.cursor/agents/` by `bootstrap/install.sh` (source:
-`~/.cursor/plugins/local/agentic-workflow/agents/`, or the clone's `cursor/agents/`
-when the local plugin is not installed yet).
+Definitions are symlinked by `bootstrap/install.sh`:
+- **Claude Code:** `.claude/agents/` — loaded natively as project subagents.
+- **Cursor:** `.cursor/agents/` — reference symlinks (source:
+  `~/.cursor/plugins/local/agentic-workflow/agents/`, or the clone's `cursor/agents/`
+  when the local plugin is not installed yet).
 
 | Agent | Use when |
 |---|---|
 | **planner** | A risk-first implementation roadmap is needed in isolation (e.g. during `/plan-feature`) |
 | **researcher** | Library or API research would bloat the main thread |
 | **reviewer** | A findings-only code review is needed before fixing (e.g. during `/review-loop`) |
+| **pr-reviewer** | A scored PR review (0–5, eight dimensions) before posting a PR comment |
 
 ## Definitions
 
 @.cursor/agents/planner.md
 @.cursor/agents/researcher.md
 @.cursor/agents/reviewer.md
+@.cursor/agents/pr-reviewer.md

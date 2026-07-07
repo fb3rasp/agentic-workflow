@@ -32,6 +32,7 @@ This repo uses the agentic-workflow plugin. Typical loop:
 /discover → /plan-feature → /decompose → build → /code-structure → /review-loop
                                                         ↘ /document-architecture
                                                         ↘ /architecture-review
+                                                        ↘ /create-pr → /review-pr → /pr-review-loop
                                                         ↘ /handoff (before clearing)
 ```
 
@@ -45,44 +46,43 @@ to flag drift in a diff against the documented architecture.
 | `/decompose` | Plan | Split a plan into stacked PRs (<1,000 lines each) |
 | `/code-structure` | Build | Dedupe → service layer; enforce domain isolation |
 | `/review-loop` | Review | Review → fix → re-test until clean and green |
+| `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
+| `/review-pr` | Review | Score PR 0–5 (min of 8 dims); post PR comment |
+| `/pr-review-loop` | Review | Confirm each iteration; fix, push, re-review until 5/5 or cap |
 | `/document-architecture` | Any | C4 L1/L2/L3 + deployment, integrations, data flow |
 | `/architecture-review` | Review | Flag drift in a diff vs. `docs/architecture/` |
 | `/handoff` | Any | Persist context to disk before clearing a thread |
 
-Slash commands require the plugin (see the agentic-workflow README). Command definitions
-are also available on disk:
-- **In-repo (after bootstrap):** `.cursor/commands/<name>.md` — symlinks for browsing
-  and `@` includes below.
-- **Installed plugin:** `~/.cursor/plugins/local/agentic-workflow/commands/<name>.md`
-  (Cursor, after `build/sync.sh --install`) or the plugin's `commands/` dir in Claude Code.
-- **Plugin root (link-back):** `.cursor/agentic-workflow-plugin/` — symlinked by bootstrap.
+Slash commands load natively in each harness after bootstrap:
+- **Claude Code:** `.claude/commands/engineer/<name>.md` — loaded as namespaced project
+  commands. Type `/engineer` and tab-complete the group: `/engineer:discover`,
+  `/engineer:plan-feature`, `/engineer:decompose`, … No `/plugin install` needed.
+- **Cursor:** unnamespaced (`/discover`, `/plan-feature`, …) from the installed plugin
+  (`~/.cursor/plugins/local/agentic-workflow/`); `.cursor/commands/<name>.md` are
+  reference symlinks for browsing.
 
-## Commands
-
-@.cursor/commands/discover.md
-@.cursor/commands/plan-feature.md
-@.cursor/commands/decompose.md
-@.cursor/commands/code-structure.md
-@.cursor/commands/review-loop.md
-@.cursor/commands/document-architecture.md
-@.cursor/commands/architecture-review.md
-@.cursor/commands/handoff.md
+The workflow table above uses the short names; in Claude Code prefix them with
+`engineer:` (e.g. `/discover` → `/engineer:discover`).
+- **Plugin link-backs:** `.claude/agentic-workflow-plugin/` and
+  `.cursor/agentic-workflow-plugin/` — symlinked by bootstrap.
 
 ## Agents
-The plugin provides three subagents (`planner`, `researcher`, `reviewer`) for
-specialised work. See `AGENTS.md` for when to use each and their prompt definitions
-(symlinked at `.cursor/agents/` after bootstrap).
+Subagents (`planner`, `researcher`, `reviewer`, `pr-reviewer`) are available for
+specialised work — in Claude Code they load natively from `.claude/agents/`; in Cursor
+from the installed plugin. See `AGENTS.md` for when to use each.
 
 ## Hooks
-Three guardrails (`dep-age-guard`, `format-changed`, `run-tests`) run automatically from
-the **installed plugin** — not from this repo. See `HOOKS.md` for when each fires and
-what it does. Script sources and wiring are symlinked under `.cursor/hooks/` for
-reference only.
+Three guardrails (`dep-age-guard`, `format-changed`, `run-tests`) run automatically:
+- **Claude Code:** wired in `.claude/settings.json`, scripts at `.claude/hooks/`.
+- **Cursor:** from the **installed plugin**; `.cursor/hooks/` symlinks are reference only.
+See `HOOKS.md` for when each fires and what it does.
 
 ## MCP
-The plugin ships a GitHub MCP server config (`github`). It loads from the **installed
-plugin**, not this repo. See `MCP.md` for servers, required env vars, and the reference
-symlink at `.cursor/agentic-workflow-mcp.json`.
+A GitHub MCP server config (`github`) ships with the workflow:
+- **Claude Code:** `.mcp.json` at the repo root (copied by bootstrap; approve on first use).
+- **Cursor:** loads from the **installed plugin**; reference symlink at
+  `.cursor/agentic-workflow-mcp.json`.
+See `MCP.md` for servers and required env vars.
 
 ## Not in this plugin
 Cursor skills (`~/.cursor/skills-cursor/`) are a separate system — not symlinked or
