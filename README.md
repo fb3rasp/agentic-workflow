@@ -24,6 +24,7 @@ commands, agents, hooks, MCP — for Claude Code CLI) is dropped into each repo 
 | `/discover` | Discovery | Back-and-forth to build shared understanding; refuses to code |
 | `/plan-feature` | Plan | Writes a risk-first plan to `plan/<feature>.md` |
 | `/decompose` | Plan | Splits a plan into stacked PRs (<1,000 lines each) |
+| `/decompose-to-userstories` | Plan | Turns plan + stacked PRs into JIRA-ready EPICs and per-PR user stories in `plan/` |
 | `/code-structure` | Build | Dedupe → service layer; enforces domain isolation |
 | `/review-loop` | Review | review → fix → re-test until clean + green |
 | `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
