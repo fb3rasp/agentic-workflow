@@ -21,7 +21,7 @@ per harness:
 |---|---|---|---|
 | `dep-age-guard.sh` | `beforeShellExecution` | `PreToolUse` (Bash) | Blocks `npm`/`pnpm`/`yarn`/`bun`/`pip` installs of packages published <14 days ago |
 | `format-changed.sh` | `afterFileEdit` | `PostToolUse` (Edit\|Write) | Best-effort Prettier on the edited file; never fails the turn |
-| `run-tests.sh` | `stop` | `Stop` | Runs the project test suite (npm/pnpm/yarn/bun/pytest); must be green before done |
+| `run-tests.sh` | `stop` | `Stop` | Runs the project test suite (npm/pnpm/yarn/bun/pytest); on failure blocks the stop in Claude Code (exit 2) so the agent keeps fixing. `RUN_TESTS_SKIP=1` bypasses |
 
 ## Wiring (reference)
 

@@ -13,7 +13,7 @@ if [ ! -t 0 ]; then
   fi
 fi
 [ -z "$FILE" ] && FILE="${1:-${TOOL_FILE_PATH:-}}"
-[ -z "$FILE" ] || [ ! -f "$FILE" ] && exit 0
+if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then exit 0; fi
 
 if command -v prettier >/dev/null 2>&1; then
   case "$FILE" in
