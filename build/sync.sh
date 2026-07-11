@@ -71,9 +71,10 @@ for f in "$SHARED"/agents/*.md; do
   emit_md "$f" "$CLAUDE_PLUGIN/agents/$n" "$CURSOR/agents/$n" agent
 done
 
-echo "==> hooks (verbatim, executable in both)"
+echo "==> hooks (shared verbatim in both; cursor/ adapters Cursor-only)"
 cp "$SHARED"/hooks/*.sh "$CLAUDE_PLUGIN/hooks/"
 cp "$SHARED"/hooks/*.sh "$CURSOR/hooks/"
+cp "$SHARED"/hooks/cursor/*.sh "$CURSOR/hooks/"
 chmod +x "$CLAUDE_PLUGIN/hooks/"*.sh "$CURSOR/hooks/"*.sh
 
 echo "==> mcp"
@@ -111,17 +112,9 @@ cat > "$CLAUDE_PLUGIN/hooks/hooks.json" <<'JSON'
   }
 }
 JSON
-# Cursor hook config (Cursor's schema differs — verify in Cursor settings)
-cat > "$CURSOR/hooks/hooks.json" <<'JSON'
-{
-  "version": 1,
-  "hooks": {
-    "beforeShellExecution": [ { "command": "./hooks/dep-age-guard.sh" } ],
-    "afterFileEdit":        [ { "command": "./hooks/format-changed.sh" } ],
-    "stop":                 [ { "command": "./hooks/run-tests.sh" } ]
-  }
-}
-JSON
+# Cursor loads hooks only from enterprise/team/project/user hooks.json — never
+# from plugins — so no hooks.json ships in the Cursor package. bootstrap/install.sh
+# writes the project-level .cursor/hooks.json wiring instead.
 
 echo "==> manifests"
 cat > "$ROOT/.claude-plugin/marketplace.json" <<JSON

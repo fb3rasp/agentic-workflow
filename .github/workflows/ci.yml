@@ -22,7 +22,7 @@ jobs:
           fi
 
       - name: Shellcheck
-        run: shellcheck shared/hooks/*.sh build/sync.sh build/test-hooks.sh bootstrap/install.sh
+        run: shellcheck shared/hooks/*.sh shared/hooks/cursor/*.sh build/sync.sh build/test-hooks.sh bootstrap/install.sh
 
       - name: Hook tests
         run: ./build/test-hooks.sh

@@ -131,6 +131,40 @@ check "no file path"                         0 "$?"
 bash "$F" /nonexistent/file.ts </dev/null >/dev/null 2>&1
 check "nonexistent file"                     0 "$?"
 
+# --- cursor-shell-guard (beforeShellExecution adapter) --------------------------------
+A="$HOOKS/cursor/cursor-shell-guard.sh"
+
+echo "== cursor-shell-guard"
+reset_log
+OUT="$(printf '%s' '{"command":"npm install fresh-pkg"}' | bash "$A" 2>/dev/null)"
+check "fresh package -> deny verdict"        deny "$(printf '%s' "$OUT" | jq -r '.permission')"
+check "  reason in agent_message"            0 "$(printf '%s' "$OUT" | jq -e '.agent_message | contains("fresh-pkg")' >/dev/null; echo $?)"
+OUT="$(printf '%s' '{"command":"npm install old-pkg"}' | bash "$A" 2>/dev/null)"
+check "old package -> allow verdict"         allow "$(printf '%s' "$OUT" | jq -r '.permission')"
+OUT="$(printf '%s' '{"command":"git status"}' | bash "$A" 2>/dev/null)"
+check "non-install -> allow verdict"         allow "$(printf '%s' "$OUT" | jq -r '.permission')"
+
+# Generated-package layout (adapter and guard side by side in cursor/hooks/)
+GEN="$ROOT/cursor/hooks/cursor-shell-guard.sh"
+if [ -f "$GEN" ]; then
+  OUT="$(printf '%s' '{"command":"npm install fresh-pkg"}' | bash "$GEN" 2>/dev/null)"
+  check "generated-package adapter denies"   deny "$(printf '%s' "$OUT" | jq -r '.permission')"
+fi
+
+# --- cursor-stop-tests (stop adapter) --------------------------------------------------
+B="$HOOKS/cursor/cursor-stop-tests.sh"
+
+echo "== cursor-stop-tests"
+echo '{"scripts":{"test":"echo assertion-boom && exit 1"}}' > "$PROJ/package.json"
+OUT="$(printf '%s' '{"status":"completed","loop_count":0}' | CLAUDE_PROJECT_DIR="$PROJ" bash "$B" 2>/dev/null)"
+check "failing suite -> followup_message"    0 "$(printf '%s' "$OUT" | jq -e '.followup_message | contains("assertion-boom")' >/dev/null; echo $?)"
+OUT="$(printf '%s' '{"status":"aborted","loop_count":0}' | CLAUDE_PROJECT_DIR="$PROJ" bash "$B" 2>/dev/null)"
+check "aborted turn -> no followup"          0 "$(printf '%s' "$OUT" | jq -e 'has("followup_message") | not' >/dev/null; echo $?)"
+echo '{"scripts":{"test":"echo all-green && exit 0"}}' > "$PROJ/package.json"
+OUT="$(printf '%s' '{"status":"completed","loop_count":0}' | CLAUDE_PROJECT_DIR="$PROJ" bash "$B" 2>/dev/null)"
+check "passing suite -> no followup"         0 "$(printf '%s' "$OUT" | jq -e 'has("followup_message") | not' >/dev/null; echo $?)"
+rm -f "$PROJ/package.json"
+
 # --- summary ------------------------------------------------------------------------
 echo
 echo "passed: $PASS  failed: $FAIL"

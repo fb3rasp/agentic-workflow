@@ -10,11 +10,13 @@
 #
 # Copies (without overwriting): CLAUDE.md, AGENTS.md, HOOKS.md, MCP.md,
 # .cursor/rules/standards.mdc, .github/pull_request_template.md, plan/,
-# .claude/settings.json (hook wiring), .mcp.json (project-root MCP for Claude Code).
+# .claude/settings.json (Claude hook wiring), .cursor/hooks.json (Cursor hook
+# wiring — Cursor only loads hooks from project/user/team/enterprise hooks.json,
+# never from plugins), .mcp.json (project-root MCP for Claude Code).
 #
-# Cursor symlinks (reference; hooks/MCP execute from plugin): .cursor/commands/,
-# .cursor/agents/, .cursor/hooks/, .cursor/agentic-workflow-mcp.json,
-# .cursor/agentic-workflow-plugin/.
+# Cursor symlinks: .cursor/hooks/ (ACTIVE — wired by .cursor/hooks.json),
+# .cursor/commands/, .cursor/agents/ (reference; execute from plugin),
+# .cursor/agentic-workflow-mcp.json, .cursor/agentic-workflow-plugin/.
 #
 # Claude Code symlinks (ACTIVE — Claude Code loads these natively, no plugin
 # install needed): .claude/commands/<namespace>/ (default "engineer" →
@@ -153,18 +155,50 @@ link_plugin_md() { # $1=target  $2=commands|agents  $3=env-var  $4=label
   done
 }
 
-link_plugin_hooks() { # $1=target repo
-  local target="$1" src name f
+link_plugin_hooks() { # $1=target repo — ACTIVE: wired by .cursor/hooks.json (written below)
+  local target="$1" src f
   src="$(resolve_plugin_subdir hooks AGENTIC_WORKFLOW_HOOKS)"
   if [ -z "$src" ]; then
     echo "  warn: plugin hooks not found — install plugin first (see README step 1)" >&2
     return 0
   fi
   mkdir -p "$target/.cursor/hooks"
-  for f in "$src"/*.sh "$src"/hooks.json; do
+  # Cursor never loaded a hooks.json from this dir — prune the old dead symlink.
+  if [ -L "$target/.cursor/hooks/hooks.json" ]; then
+    rm "$target/.cursor/hooks/hooks.json"
+    echo "  removed (dead config — wiring lives in .cursor/hooks.json): $target/.cursor/hooks/hooks.json"
+  fi
+  for f in "$src"/*.sh; do
     [ -f "$f" ] || continue
     link_safe "$f" "$target/.cursor/hooks/$(basename "$f")"
   done
+}
+
+write_cursor_hooks() { # $1=target repo — project-level Cursor hook wiring; never overwrites
+  local target="$1" dest
+  dest="$target/.cursor/hooks.json"
+  if [ -e "$dest" ]; then
+    echo "  skip (exists): $dest — merge the hooks wiring from HOOKS.md if not present"
+    return 0
+  fi
+  mkdir -p "$target/.cursor"
+  cat > "$dest" <<'JSON'
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      { "command": ".cursor/hooks/cursor-shell-guard.sh", "matcher": "npm|pnpm|yarn|bun|pip" }
+    ],
+    "afterFileEdit": [
+      { "command": ".cursor/hooks/format-changed.sh" }
+    ],
+    "stop": [
+      { "command": ".cursor/hooks/cursor-stop-tests.sh" }
+    ]
+  }
+}
+JSON
+  echo "  added: $dest"
 }
 
 link_plugin_mcp() { # $1=target repo
@@ -295,11 +329,12 @@ mkdir -p "$TARGET/plan"
 [ -e "$TARGET/plan/.gitkeep" ] || touch "$TARGET/plan/.gitkeep"
 echo "  ensured: $TARGET/plan/"
 
-echo "==> link Cursor (reference → plugin; hooks/MCP execute from plugin, not project)"
+echo "==> link Cursor (commands/agents/MCP from plugin; hooks ACTIVE via .cursor/hooks.json)"
 link_plugin_root "$TARGET"
 link_plugin_md "$TARGET" commands AGENTIC_WORKFLOW_COMMANDS "commands"
 link_plugin_md "$TARGET" agents   AGENTIC_WORKFLOW_AGENTS   "agents"
 link_plugin_hooks "$TARGET"
+write_cursor_hooks "$TARGET"
 link_plugin_mcp "$TARGET"
 
 echo "==> link Claude Code (ACTIVE — loads natively from .claude/, no plugin install needed)"
@@ -321,8 +356,8 @@ fi
 [ "$CLAUDE_PLUGIN_FOUND" -eq 0 ] && echo "warn: Claude plugin source missing — .claude/ links skipped." >&2
 
 echo "Done."
-echo "  Cursor:      commands/agents/hooks/MCP execute from the installed plugin;"
-echo "               .cursor/ holds reference symlinks + plugin link-back."
+echo "  Cursor:      commands/agents/MCP execute from the installed plugin; hooks run"
+echo "               FROM THIS PROJECT — .cursor/hooks.json wires the .cursor/hooks/ links."
 echo "  Claude Code: commands load from .claude/commands/$CLAUDE_NS/ — type /$CLAUDE_NS and"
 echo "               tab to browse (/$CLAUDE_NS:discover, /$CLAUDE_NS:plan-feature, ...)."
 echo "               Agents load from .claude/agents/, hooks run via .claude/settings.json,"

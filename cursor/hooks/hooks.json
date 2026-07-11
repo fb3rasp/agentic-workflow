@@ -1,8 +1,0 @@
-{
-  "version": 1,
-  "hooks": {
-    "beforeShellExecution": [ { "command": "./hooks/dep-age-guard.sh" } ],
-    "afterFileEdit":        [ { "command": "./hooks/format-changed.sh" } ],
-    "stop":                 [ { "command": "./hooks/run-tests.sh" } ]
-  }
-}
