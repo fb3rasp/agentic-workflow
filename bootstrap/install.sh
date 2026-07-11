@@ -68,7 +68,7 @@ resolve_plugin_root() {
   elif [ -f "$BOOT/../cursor/.cursor-plugin/plugin.json" ]; then
     root="$BOOT/../cursor"
   fi
-  [ -n "$root" ] && echo "$(cd "$root" && pwd)" || echo ""
+  { [ -n "$root" ] && (cd "$root" && pwd); } || echo ""
 }
 
 # Claude plugin root: env override → clone's plugins/core-workflow.
@@ -80,7 +80,7 @@ resolve_claude_plugin_root() {
   elif [ -f "$BOOT/../plugins/core-workflow/.claude-plugin/plugin.json" ]; then
     root="$BOOT/../plugins/core-workflow"
   fi
-  [ -n "$root" ] && echo "$(cd "$root" && pwd)" || echo ""
+  { [ -n "$root" ] && (cd "$root" && pwd); } || echo ""
 }
 
 # Subdir or env override pointing directly at a directory.
@@ -88,11 +88,11 @@ resolve_plugin_subdir() { # $1=commands|agents|hooks  $2=env-var for override (o
   local subdir="$1" env_var="${2:-}" override="" root=""
   if [ -n "$env_var" ]; then override="${!env_var:-}"; fi
   if [ -n "$override" ] && [ -d "$override" ]; then
-    echo "$(cd "$override" && pwd)"; return
+    (cd "$override" && pwd); return 0
   fi
   root="$(resolve_plugin_root)"
   if [ -n "$root" ] && [ -d "$root/$subdir" ]; then
-    echo "$(cd "$root/$subdir" && pwd)"; return
+    (cd "$root/$subdir" && pwd); return 0
   fi
   echo ""
 }
