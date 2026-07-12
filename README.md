@@ -40,8 +40,11 @@ Hooks: `dep-age-guard` (block deps <14 days), `run-tests` (on stop), `format-cha
 ## The frontend workflow
 
 A parallel command set for **Vue 3 + Vite SPA** repos (DDD modules, component-library-first,
-Ruby backend in a **sibling repo** at the same folder level — commands read the API contract
-from `../<backend>`). Claude Code: `/frontend:<name>`; Cursor: `/frontend-<name>`.
+Ruby backend in a separate repo). Locations are declared **per project** in a "Project map"
+table in the bootstrapped `CLAUDE.md` — SPA source root (e.g. `./spa/src`), backend repo
+(e.g. `./jam/education`), and component-library/Storybook URL (e.g.
+`http://localhost:5600/component-library`); commands resolve the map first and read the API
+contract from the backend repo. Claude Code: `/frontend:<name>`; Cursor: `/frontend-<name>`.
 
 ```
 /frontend:discover → /frontend:analyze-patterns → /frontend:plan-feature

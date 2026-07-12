@@ -10,13 +10,18 @@ lean.
 
 Analysis is **per-plan**: tie it to one feature/entity.
 
-## Step 1 — Scope
+## Step 1 — Scope & project map
 Resolve the feature/entity from the argument or the referenced `plan/<feature>.md`. If none
 is given, ask which feature and which primary entity/entities it concerns.
 
+Read the "Project map" table in `CLAUDE.md` for the **SPA source root**, the **backend repo
+path**, and the **component-library (Storybook) URL** (e.g. SPA `./spa/src`, backend
+`./jam/education`, library `http://localhost:5600/component-library`). If an entry is
+missing or still `[TODO]`, ask the operator and offer to fill it in.
+
 ## Step 2 — Disk: existing patterns (source of truth)
-In this SPA repo, find the nearest existing implementations of the same shape and cite
-`file:line`:
+In the SPA source (from the map), find the nearest existing implementations of the same
+shape and cite `file:line`:
 - List/table view, detail view, create/edit **form**, validation approach.
 - **Store** module (Pinia) for a comparable entity — state, actions, getters.
 - **Service / API** layer calls (the anti-corruption layer wrapping backend endpoints).
@@ -24,17 +29,18 @@ In this SPA repo, find the nearest existing implementations of the same shape an
 - The **component library** source — the components (and their props/variants) that CRUD
   screens here are built from.
 
-## Step 3 — Disk: sibling backend contract
-Read `../<backend>` (routes + controllers) for the entity's real endpoints: paths, verbs,
-request/response payloads, auth. This is what the service layer must match. Flag missing or
-mismatched endpoints as gaps.
+## Step 3 — Disk: backend contract
+Read the backend repo from the map (routes + controllers) for the entity's real endpoints:
+paths, verbs, request/response payloads, auth. This is what the service layer must match.
+Flag missing or mismatched endpoints as gaps.
 
-## Step 4 — Storybook: component catalog
-Ask for the Storybook URL (default `http://localhost:6006`). Fetch the machine-readable
-index at `<url>/index.json` (fall back to `<url>/stories.json` for older Storybook) and
-enumerate the components relevant to this feature (tables, forms, inputs, selects, modals,
-etc.) with their **story IDs**. Cross-reference each against the on-disk component source
-from Step 2 so recommendations point at real, current props.
+## Step 4 — Component library: catalog
+Use the component-library URL from the map (ask if unset; classic Storybook default is
+`http://localhost:6006`). Fetch the machine-readable index at `<url>/index.json` (fall back
+to `<url>/stories.json` for older Storybook) and enumerate the components relevant to this
+feature (tables, forms, inputs, selects, modals, etc.) with their **story IDs**.
+Cross-reference each against the on-disk component source from Step 2 so recommendations
+point at real, current props.
 
 ## Step 5 — Decide with the operator
 Present the discovered patterns and candidate components, then **ask the operator which to
@@ -54,7 +60,7 @@ Write `plan/<feature>.patterns.md`:
 ## Use these components
 - <ComponentName> (story: `<story-id>`) — for <use> — props: <key props>
 
-## Backend contract (../<backend>)
+## Backend contract (<backend repo path from map>)
 - <VERB> <path> — request: … response: … — <notes / gaps>
 
 ## Module decision

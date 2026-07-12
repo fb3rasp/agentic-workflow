@@ -1,7 +1,7 @@
 <!-- description: Split a frontend plan into stacked story branches (<1,000 lines each) -->
 
 Take the referenced plan (in `plan/`) and decompose it into a sequence of **stacked story
-branches** in the `spa` repo.
+branches** in the SPA repo (see the `CLAUDE.md` project map for its location).
 
 Rules:
 - **Branch per plan, branch per story:** the plan has a base branch (e.g. `feat/<feature>`);

@@ -69,9 +69,22 @@ The workflow table above uses the short names; in Claude Code prefix them with
 
 ## Frontend workflow (Vue/Vite SPA repos)
 
-For SPA repos there is a parallel `frontend` command set. Repo topology convention: the
-SPA and its Ruby backend are sibling repos at the same folder level — commands read the
-API contract from `../<backend>` instead of guessing.
+For SPA repos there is a parallel `frontend` command set.
+
+### Project map (fill in per project)
+<!-- Frontend commands resolve locations from this table before doing anything else.
+     Paths are relative to this file. Update it when the layout changes. -->
+
+| | |
+|---|---|
+| **SPA source** | `[TODO: e.g. ./spa/src]` |
+| **Backend repo** | `[TODO: e.g. ./jam/education]` |
+| **Component library (Storybook)** | `[TODO: e.g. http://localhost:5600/component-library]` |
+
+Commands read the API contract from the **backend repo** path and the component catalog
+from the **component library** URL (`<url>/index.json`). If an entry is missing or still
+`[TODO]`, commands ask the operator and offer to fill it in here. Default topology when
+unset: SPA and backend as sibling repos at the same folder level.
 
 ```
 /frontend:discover → /frontend:analyze-patterns → /frontend:plan-feature
