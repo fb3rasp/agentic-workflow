@@ -81,9 +81,15 @@ For SPA repos there is a parallel `frontend` command set.
 | **SPA source** | `[TODO: e.g. ./spa/src]` |
 | **Backend repo** | `[TODO: e.g. ./jam/education]` |
 | **Component library (Storybook)** | `[TODO: e.g. http://localhost:5600/component-library]` |
+| **Backend API spec** | `[TODO: OpenAPI/Swagger path or URL, e.g. ./jam/education/swagger.yaml]` |
+| **Claude Design project** | `[TODO: claude.ai/design design-system project name or ID]` |
 
-Commands read the API contract from the **backend repo** path and the component catalog
-from the **component library** URL (`<url>/index.json`). If an entry is missing or still
+Commands resolve the API contract **spec-first** (the OpenAPI/Swagger document is the
+published contract; routes/controllers in the backend repo are the fallback and the
+cross-check) and the component catalog from the **component library** URL
+(`<url>/index.json`). The **Claude Design project** is where `/frontend:design-sync`
+publishes the component catalog and where approved feature designs
+(`designs/<feature>/manifest.json`) are read from. If an entry is missing or still
 `[TODO]`, commands ask the operator and offer to fill it in here. Default topology when
 unset: SPA and backend as sibling repos at the same folder level.
 
@@ -103,6 +109,7 @@ unset: SPA and backend as sibling repos at the same folder level.
 | `/frontend:code-structure` | Build | Component split, composables, service layer, DDD module isolation |
 | `/frontend:review-loop` | Review | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
 | `/frontend:enterprise-review` | Review | Same deep principles audit as `/engineer:enterprise-review`, frontend expressions |
+| `/frontend:design-sync` | Design | Publish the component catalog to the Claude Design project (incremental; Claude Code only) |
 
 PR flow and handoff reuse the `engineer:` commands. In Cursor the same commands are flat
 with a prefix: `/frontend-discover`, `/frontend-analyze-patterns`, … Frontend standards:
