@@ -42,10 +42,17 @@ Hooks: `dep-age-guard` (block deps <14 days), `run-tests` (on stop), `format-cha
 
 A parallel command set for **Vue 3 + Vite SPA** repos (DDD modules, component-library-first,
 Ruby backend in a separate repo). Locations are declared **per project** in a "Project map"
-table in the bootstrapped `CLAUDE.md` — SPA source root (e.g. `./spa/src`), backend repo
-(e.g. `./jam/education`), and component-library/Storybook URL (e.g.
-`http://localhost:5600/component-library`); commands resolve the map first and read the API
-contract from the backend repo. Claude Code: `/frontend:<name>`; Cursor: `/frontend-<name>`.
+table in the bootstrapped `CLAUDE.md` — SPA source root, backend repo, component-library/
+Storybook URL, **backend API spec** (OpenAPI/Swagger, path or URL — the contract is resolved
+spec-first with routes/controllers as fallback and drift flagged), and the **Claude Design
+project**. Claude Code: `/frontend:<name>`; Cursor: `/frontend-<name>`.
+
+The workflow supports a **catalog-first design round trip**: `/frontend:design-sync`
+publishes the component library to a claude.ai/design design-system project; mockups are
+composed there from real components (new components get marked in a feature manifest); an
+**approved** design then pre-seeds `/frontend:analyze-patterns` and acts as acceptance
+criteria for the build. Full dummy walkthrough:
+[docs/frontend-design-roundtrip.md](docs/frontend-design-roundtrip.md).
 
 ```
 /frontend:discover → /frontend:analyze-patterns → /frontend:plan-feature
@@ -61,6 +68,7 @@ contract from the backend repo. Claude Code: `/frontend:<name>`; Cursor: `/front
 | `/frontend:code-structure` | Component split, composables, service layer, DDD module isolation |
 | `/frontend:review-loop` | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
 | `/frontend:enterprise-review` | Deep principles audit (shared with the engineer set) |
+| `/frontend:design-sync` | Publish the component catalog to the Claude Design project (incremental, approval-gated; Claude Code only) |
 
 PR flow and handoff reuse the `engineer:` commands. Frontend subagents: `frontend-planner`,
 `frontend-reviewer`, `pattern-analyst`. Standards rule: `frontend-standards.mdc`
