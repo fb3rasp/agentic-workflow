@@ -1,0 +1,74 @@
+# Frontend engineering standards
+
+These standards apply to all work in the **SPA** repository (Vue 3 + Vite). They mirror
+the backend standards' ethos — service layer, domain isolation, test discipline — adapted
+to a component-driven frontend. Enforced by hooks where possible and by review everywhere
+else.
+
+## Repo topology & project map
+- Where things live is **declared per project** in the "Project map" table in `CLAUDE.md`:
+  the SPA source root (e.g. `./spa/src`), the Ruby backend repo (e.g. `./jam/education`),
+  and the component library / Storybook URL (e.g.
+  `http://localhost:5600/component-library`). Paths are relative to the project root.
+- Commands resolve the map **before** doing anything else. If an entry is missing or still
+  `[TODO]`, ask the operator and offer to fill it in — do not guess. Default topology when
+  unset: SPA and backend as separate git repos at the same folder level (`../<backend>`).
+- When you need the API contract (endpoints, payloads, auth), **read the backend repo from
+  the map** (routes/controllers) — do not guess the shape. Never reach across for anything
+  but the contract; the SPA talks to the backend only over HTTP.
+
+## Architecture (Domain-Driven, modular)
+- Organise by **domain module**, not by file type:
+  ```
+  src/modules/<domain>/
+    components/   presentational + container components for this domain
+    composables/  reusable reactive logic (use…)
+    services/     API/anti-corruption layer wrapping backend endpoints
+    stores/       domain state (Pinia)
+    types/        domain types/DTOs
+    routes.ts     domain routes
+  ```
+- **Extend vs. new module:** extend an existing module when the work is a variation of its
+  domain; create a new module only for a genuinely new bounded context. Decide this
+  explicitly during planning.
+- **Domain isolation:** no module reaches into another module's store or internals.
+  Cross-module interaction goes through a typed public API (exported composables/services)
+  or events — never shared mutable state.
+- **Anti-corruption layer:** all backend calls go through a module's `services/` layer that
+  maps backend payloads to domain types. Never let a raw backend DTO leak into components.
+- **Container vs. presentational:** keep data-fetching/state in container components or
+  composables; keep presentational components pure (props in, events out).
+
+## Component library first
+- **Before writing a new component, consume the library.** Check the on-disk component
+  library source and the running Storybook catalog for an existing component (table, form,
+  input, modal, …). Prefer composing library components over hand-rolling.
+- Reach for a new bespoke component only when nothing in the library fits; note why in the
+  PR. Reusable primitives belong in the library, not a feature module.
+
+## Standard CRUD
+- New CRUD features follow the **existing codebase's** established patterns (list view,
+  form, validation, store module, service calls). Discover those patterns per feature with
+  `/frontend:analyze-patterns` rather than inventing a new shape.
+
+## Testing
+- Tests are the definition of done. A change isn't complete until the suite is green
+  (Vitest; component tests for component behaviour).
+- Cover the edge cases raised in review, not only the happy path. Test behaviour (rendered
+  output, emitted events, store transitions), not implementation details.
+
+## Pull requests & git flow
+- **Branch per plan** in `spa`; **stack a branch per story** on top, in dependency order.
+- Keep PRs under ~1,000 lines / one concern. Each stacked branch builds cleanly on the
+  previous.
+
+## Security
+- **Never install a dependency published less than 14 days ago** (enforced by the
+  `dep-age-guard` hook).
+- No secrets in the SPA bundle — anything sensitive stays behind the backend.
+- Escape/bind all user-rendered content; never use `v-html` on untrusted input.
+
+## Context discipline
+- Start a fresh thread per feature. When context grows heavy (~70%), run `/engineer:handoff`
+  to persist state, then clear.
+- Plans live as markdown in `plan/` — for you as much as for the agent.

@@ -27,6 +27,7 @@ commands, agents, hooks, MCP — for Claude Code CLI) is dropped into each repo 
 | `/decompose-to-userstories` | Plan | Turns plan + stacked PRs into JIRA-ready EPICs and per-PR user stories in `plan/` |
 | `/code-structure` | Build | Dedupe → service layer; enforces domain isolation |
 | `/review-loop` | Review | review → fix → re-test until clean + green |
+| `/enterprise-review` | Review | Deep principles audit: DDD, modularity & cohesion, dependency hygiene (no cycles), OO design, security — verdict per dimension, advisory; report to `plan/<slug>.enterprise-review.md` |
 | `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
 | `/review-pr` | Review | Score PR 0–5 (min of 8 dims); post PR comment |
 | `/pr-review-loop` | Review | Confirm each iteration; fix, push, re-review until 5/5 or cap |
@@ -34,8 +35,36 @@ commands, agents, hooks, MCP — for Claude Code CLI) is dropped into each repo 
 | `/architecture-review` | Review | Flags drift in a diff vs. `docs/architecture/` |
 | `/handoff` | Any | Persists context to disk before clearing a heavy thread |
 
-Subagents: `planner`, `researcher`, `reviewer`, `pr-reviewer`.
+Subagents: `planner`, `researcher`, `reviewer`, `pr-reviewer`, `enterprise-reviewer`.
 Hooks: `dep-age-guard` (block deps <14 days), `run-tests` (on stop), `format-changed` (on edit).
+
+## The frontend workflow
+
+A parallel command set for **Vue 3 + Vite SPA** repos (DDD modules, component-library-first,
+Ruby backend in a separate repo). Locations are declared **per project** in a "Project map"
+table in the bootstrapped `CLAUDE.md` — SPA source root (e.g. `./spa/src`), backend repo
+(e.g. `./jam/education`), and component-library/Storybook URL (e.g.
+`http://localhost:5600/component-library`); commands resolve the map first and read the API
+contract from the backend repo. Claude Code: `/frontend:<name>`; Cursor: `/frontend-<name>`.
+
+```
+/frontend:discover → /frontend:analyze-patterns → /frontend:plan-feature
+    → /frontend:decompose → build → /frontend:code-structure → /frontend:review-loop
+```
+
+| Command | Does |
+|---|---|
+| `/frontend:discover` | Views/routes, components, state, backend contract; refuses to code |
+| `/frontend:analyze-patterns` | Extract CRUD/component patterns from disk + Storybook (`index.json`); ask the author which to adopt; write `plan/<feature>.patterns.md` |
+| `/frontend:plan-feature` | Risk-first plan: module layout, components, store, service/ACL layer |
+| `/frontend:decompose` | Split into stacked story branches (types → service → store → views) |
+| `/frontend:code-structure` | Component split, composables, service layer, DDD module isolation |
+| `/frontend:review-loop` | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
+| `/frontend:enterprise-review` | Deep principles audit (shared with the engineer set) |
+
+PR flow and handoff reuse the `engineer:` commands. Frontend subagents: `frontend-planner`,
+`frontend-reviewer`, `pattern-analyst`. Standards rule: `frontend-standards.mdc`
+(glob-scoped to frontend files, not `alwaysApply`).
 
 ## Not part of this repo
 
@@ -50,6 +79,7 @@ independent.
 ```
 shared/                  # SOURCE OF TRUTH — author here only
   standards.md   commands/   agents/   hooks/   mcp.json
+  frontend/              # frontend workflow: standards.md, commands/, agents/
 build/
   sync.sh                # regenerates the committed packages from shared/
   test-hooks.sh          # hermetic behavioral tests for shared/hooks/ (also run in CI)

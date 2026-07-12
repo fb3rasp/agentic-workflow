@@ -47,6 +47,7 @@ to flag drift in a diff against the documented architecture.
 | `/decompose-to-userstories` | Plan | Turn plan + stacked PRs into JIRA-ready EPICs and user stories in `plan/` |
 | `/code-structure` | Build | Dedupe → service layer; enforce domain isolation |
 | `/review-loop` | Review | Review → fix → re-test until clean and green |
+| `/enterprise-review` | Review | Deep principles audit (DDD, modularity, dependency hygiene, OO, security); verdict per dimension, advisory |
 | `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
 | `/review-pr` | Review | Score PR 0–5 (min of 8 dims); post PR comment |
 | `/pr-review-loop` | Review | Confirm each iteration; fix, push, re-review until 5/5 or cap |
@@ -66,6 +67,47 @@ The workflow table above uses the short names; in Claude Code prefix them with
 `engineer:` (e.g. `/discover` → `/engineer:discover`).
 - **Plugin link-backs:** `.claude/agentic-workflow-plugin/` and
   `.cursor/agentic-workflow-plugin/` — symlinked by bootstrap.
+
+## Frontend workflow (Vue/Vite SPA repos)
+
+For SPA repos there is a parallel `frontend` command set.
+
+### Project map (fill in per project)
+<!-- Frontend commands resolve locations from this table before doing anything else.
+     Paths are relative to this file. Update it when the layout changes. -->
+
+| | |
+|---|---|
+| **SPA source** | `[TODO: e.g. ./spa/src]` |
+| **Backend repo** | `[TODO: e.g. ./jam/education]` |
+| **Component library (Storybook)** | `[TODO: e.g. http://localhost:5600/component-library]` |
+
+Commands read the API contract from the **backend repo** path and the component catalog
+from the **component library** URL (`<url>/index.json`). If an entry is missing or still
+`[TODO]`, commands ask the operator and offer to fill it in here. Default topology when
+unset: SPA and backend as sibling repos at the same folder level.
+
+```
+/frontend:discover → /frontend:analyze-patterns → /frontend:plan-feature
+    → /frontend:decompose → build → /frontend:code-structure → /frontend:review-loop
+                                        ↘ /engineer:create-pr → /engineer:review-pr → /engineer:pr-review-loop
+                                        ↘ /engineer:handoff (before clearing)
+```
+
+| Command | Phase | Does |
+|---|---|---|
+| `/frontend:discover` | Discovery | Views/routes, components, state, backend contract; refuses to code |
+| `/frontend:analyze-patterns` | Plan | Extract CRUD/component patterns from disk + Storybook; ask which to adopt; write `plan/<feature>.patterns.md` |
+| `/frontend:plan-feature` | Plan | Risk-first plan: module layout, components, store, service/ACL layer |
+| `/frontend:decompose` | Plan | Split into stacked story branches (types → service → store → views) |
+| `/frontend:code-structure` | Build | Component split, composables, service layer, DDD module isolation |
+| `/frontend:review-loop` | Review | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
+| `/frontend:enterprise-review` | Review | Same deep principles audit as `/engineer:enterprise-review`, frontend expressions |
+
+PR flow and handoff reuse the `engineer:` commands. In Cursor the same commands are flat
+with a prefix: `/frontend-discover`, `/frontend-analyze-patterns`, … Frontend standards:
+`.cursor/rules/frontend-standards.mdc`. Subagents: `frontend-planner`, `frontend-reviewer`,
+`pattern-analyst`.
 
 ## Agents
 Subagents (`planner`, `researcher`, `reviewer`, `pr-reviewer`) are available for
