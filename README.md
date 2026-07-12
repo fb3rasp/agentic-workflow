@@ -28,6 +28,7 @@ commands, agents, hooks, MCP — for Claude Code CLI) is dropped into each repo 
 | `/code-structure` | Build | Dedupe → service layer; enforces domain isolation |
 | `/review-loop` | Review | review → fix → re-test until clean + green |
 | `/enterprise-review` | Review | Deep principles audit: DDD, modularity & cohesion, dependency hygiene (no cycles), OO design, security — verdict per dimension, advisory; report to `plan/<slug>.enterprise-review.md` |
+| `/review-ddd-architecture` | Any | Whole-codebase DDD/OO alignment review: assessment, target structure, phased plan in `plan/`, stacked-PR decomposition |
 | `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
 | `/review-pr` | Review | Score PR 0–5 (min of 8 dims); post PR comment |
 | `/pr-review-loop` | Review | Confirm each iteration; fix, push, re-review until 5/5 or cap |
@@ -68,6 +69,7 @@ criteria for the build. Full dummy walkthrough:
 | `/frontend:code-structure` | Component split, composables, service layer, DDD module isolation |
 | `/frontend:review-loop` | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
 | `/frontend:enterprise-review` | Deep principles audit (shared with the engineer set) |
+| `/frontend:review-ddd-architecture` | Whole-codebase DDD/OO alignment review (shared with the engineer set) |
 | `/frontend:design-sync` | Publish the component catalog to the Claude Design project (incremental, approval-gated; Claude Code only) |
 
 PR flow and handoff reuse the `engineer:` commands. Frontend subagents: `frontend-planner`,

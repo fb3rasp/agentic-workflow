@@ -48,6 +48,7 @@ to flag drift in a diff against the documented architecture.
 | `/code-structure` | Build | Dedupe → service layer; enforce domain isolation |
 | `/review-loop` | Review | Review → fix → re-test until clean and green |
 | `/enterprise-review` | Review | Deep principles audit (DDD, modularity, dependency hygiene, OO, security); verdict per dimension, advisory |
+| `/review-ddd-architecture` | Any | Whole-codebase DDD/OO alignment review: assessment, target structure, phased plan, stacked-PR split |
 | `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
 | `/review-pr` | Review | Score PR 0–5 (min of 8 dims); post PR comment |
 | `/pr-review-loop` | Review | Confirm each iteration; fix, push, re-review until 5/5 or cap |
@@ -109,6 +110,7 @@ unset: SPA and backend as sibling repos at the same folder level.
 | `/frontend:code-structure` | Build | Component split, composables, service layer, DDD module isolation |
 | `/frontend:review-loop` | Review | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
 | `/frontend:enterprise-review` | Review | Same deep principles audit as `/engineer:enterprise-review`, frontend expressions |
+| `/frontend:review-ddd-architecture` | Any | Whole-codebase DDD/OO alignment review (shared with the engineer set) |
 | `/frontend:design-sync` | Design | Publish the component catalog to the Claude Design project (incremental; Claude Code only) |
 
 PR flow and handoff reuse the `engineer:` commands. In Cursor the same commands are flat

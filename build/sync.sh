@@ -90,8 +90,7 @@ done
 # Cross-namespace commands: authored once in shared/commands/ (so the engineer
 # set has them via the loop above), additionally served in the frontend set.
 echo "==> cross-namespace commands"
-# shellcheck disable=SC2043  # extensible list — intentionally one item today
-for n in enterprise-review.md; do
+for n in enterprise-review.md review-ddd-architecture.md; do
   emit_md "$SHARED/commands/$n" "$CLAUDE_PLUGIN/commands/frontend/$n" "$CURSOR/commands/frontend-$n" command
 done
 
