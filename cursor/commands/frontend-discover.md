@@ -8,18 +8,22 @@ Build a shared understanding of the frontend feature before any planning. The SP
 Vue 3 + Vite, served through a Ruby backend.
 
 0. **Resolve the project map** — read the "Project map" table in `CLAUDE.md` for the SPA
-   source root, the backend repo path, and the component-library (Storybook) URL. If an
-   entry is missing or still `[TODO]`, ask the operator and offer to fill it in (default
-   topology: backend as a sibling repo, `../<backend>`).
+   source root, the backend repo path, the component-library (Storybook) URL, the backend
+   API spec, and the Claude Design project. If an entry is missing or still `[TODO]`, ask
+   the operator and offer to fill it in (default topology: backend as a sibling repo,
+   `../<backend>`; spec and design project are optional). If the design project holds an
+   **approved** `designs/<feature>/manifest.json`, open the discussion from that design —
+   it is the strongest statement of intent available.
 1. Restate the request in your own words and confirm the goal.
 2. Ask focused clarifying questions — one cluster at a time, not a wall of questions. Cover:
    - **Views & routes** affected or added; navigation and entry points.
    - **Components** needed — check whether the component library (on disk + Storybook)
      already covers them before assuming new ones.
    - **State** — local vs. module store (Pinia); what's server-derived vs. client-only.
-   - **API contract** — which backend endpoints this needs. Read the backend repo (from
-     the project map) routes/controllers to ground the discussion in the real contract;
-     flag gaps where the backend doesn't yet expose what's needed.
+   - **API contract** — which backend endpoints this needs. Ground the discussion in the
+     published contract: the OpenAPI/Swagger spec from the project map first, the backend
+     repo's routes/controllers as fallback and cross-check. Flag gaps where the backend
+     doesn't yet expose what's needed, and drift where spec and code disagree.
    - **Domain boundaries** — which `src/modules/<domain>/` this belongs to; extend an
      existing module or introduce a new one.
    - **Non-functional** — accessibility, responsiveness, performance, i18n, auth/roles.

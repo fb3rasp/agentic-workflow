@@ -15,8 +15,12 @@ Using the discovery understanding and the `plan/<feature>.patterns.md` from
    - **Components** — which library components to compose (with story IDs) and which new
      components must be built; container vs. presentational split.
    - **State** — Pinia store shape; server-derived vs. client-only state.
-   - **Service / ACL layer** — the backend endpoints this wraps (from the backend repo in
-     the `CLAUDE.md` project map) and the mapping to domain types.
+   - **Service / ACL layer** — the backend endpoints this wraps (by `operationId` and
+     schema when the project map declares an OpenAPI spec; from routes/controllers
+     otherwise) and the mapping to domain types.
+   - **Design contract** — when an approved design exists (`designs/<feature>/` in the
+     Claude Design project, via the patterns file), its screens and component usage are
+     the acceptance criteria for the views; call out anywhere the plan deviates from it.
    - **Routes** and navigation changes.
 3. Order the work **risk-first** — prove the riskiest/unknown parts first (new backend
    integration, auth, complex interactive components, streaming) before routine list/form
