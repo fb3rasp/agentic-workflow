@@ -26,37 +26,67 @@ fi
 
 # --- only act on install commands --------------------------------------------
 case "$CMD" in
-  *"npm install "*|*"npm i "*|*"npm add "*|\
   *"pnpm add "*|*"pnpm install "*|\
+  *"npm install "*|*"npm i "*|*"npm add "*|\
   *"yarn add "*|\
   *"bun add "*|\
   *"pip install "*|*"pip3 install "*) ;;
   *) exit 0 ;;
 esac
 
-# --- extract candidate package names (drop flags, the pm, and subcommands) ----
-read -r -a TOKENS <<< "$CMD"
+# --- extract candidate package names ------------------------------------------
+# Split the command line at shell operators so tokens from other commands in a
+# chain (e.g. "npm install && npm run build") are never treated as packages, and
+# only collect tokens after a package manager's install/add subcommand.
 PKGS=()
-for tok in "${TOKENS[@]}"; do
-  case "$tok" in
-    npm|npx|pnpm|yarn|bun|pip|pip3|install|i|add|-*|*=*) continue ;;
-    *) PKGS+=("$tok") ;;
-  esac
-done
+while IFS= read -r segment; do
+  read -r -a TOKENS <<< "$segment"
+  state=cmd   # cmd -> pm -> install
+  for tok in "${TOKENS[@]}"; do
+    case "$state" in
+      cmd)
+        case "$tok" in
+          npm|pnpm|yarn|bun|pip|pip3) state=pm ;;
+          sudo|*=*) ;;                 # env assignments / sudo prefix
+          *) break ;;                  # segment isn't a package-manager command
+        esac ;;
+      pm)
+        case "$tok" in
+          install|i|add) state=install ;;
+          -*) ;;                       # global flags before the subcommand
+          *) break ;;                  # some other subcommand (run, test, ...)
+        esac ;;
+      install)
+        case "$tok" in
+          -*|*=*) ;;                   # flags and assignments
+          *) PKGS+=("$tok") ;;
+        esac ;;
+    esac
+  done
+done < <(printf '%s\n' "$CMD" | sed -E 's/\|\||&&|;|\|/\n/g')
 [ "${#PKGS[@]}" -eq 0 ] && exit 0
 
 now_epoch="$(date +%s)"
 blocked=()
 
 for pkg in "${PKGS[@]}"; do
-  # strip version specifier (lodash@1.2.3 -> lodash); skip local paths/urls
-  name="${pkg%@*}"; [ "${pkg:0:1}" = "@" ] && name="@${pkg:1}"; name="${name%@*}"
-  case "$pkg" in ./*|/*|*://*|.) continue ;; esac
+  case "$pkg" in ./*|/*|*://*|.) continue ;; esac   # skip local paths/urls
 
-  # npm registry: publish time of the latest version
+  # strip version specifier: lodash@1.2.3 -> lodash, @scope/pkg@1.2.3 -> @scope/pkg
+  if [ "${pkg:0:1}" = "@" ]; then
+    rest="${pkg:1}"
+    case "$rest" in
+      *@*) name="@${rest%@*}" ;;
+      *)   name="$pkg" ;;
+    esac
+  else
+    name="${pkg%@*}"
+  fi
+
+  # npm registry: publish time of the latest version ("/" in scoped names -> %2F)
   published=""
   if command -v curl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-    meta="$(curl -fsSL "https://registry.npmjs.org/${name}" 2>/dev/null)"
+    meta="$(curl -fsSL "https://registry.npmjs.org/${name/\//%2F}" 2>/dev/null)"
     if [ -n "$meta" ]; then
       latest="$(printf '%s' "$meta" | jq -r '."dist-tags".latest // empty')"
       [ -n "$latest" ] && published="$(printf '%s' "$meta" | jq -r --arg v "$latest" '.time[$v] // empty')"

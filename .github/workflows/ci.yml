@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Drift check — committed generated trees match shared/
+        run: |
+          ./build/sync.sh
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Generated trees out of sync with shared/. Run ./build/sync.sh and commit the result."
+            git status --short
+            git diff
+            exit 1
+          fi
+
+      - name: Shellcheck
+        run: shellcheck shared/hooks/*.sh shared/hooks/cursor/*.sh build/sync.sh build/test-hooks.sh bootstrap/install.sh
+
+      - name: Hook tests
+        run: ./build/test-hooks.sh
