@@ -25,7 +25,8 @@ CURSOR="$ROOT/cursor"                         # Cursor plugin dir
 rm -rf "$ROOT/.claude-plugin" "$ROOT/plugins" "$CURSOR"
 mkdir -p "$ROOT/.claude-plugin" \
          "$CLAUDE_PLUGIN/.claude-plugin" \
-         "$CLAUDE_PLUGIN/commands" "$CLAUDE_PLUGIN/agents" "$CLAUDE_PLUGIN/hooks" \
+         "$CLAUDE_PLUGIN/commands" "$CLAUDE_PLUGIN/commands/frontend" \
+         "$CLAUDE_PLUGIN/agents" "$CLAUDE_PLUGIN/hooks" \
          "$CURSOR/.cursor-plugin" \
          "$CURSOR/commands" "$CURSOR/agents" "$CURSOR/hooks" "$CURSOR/rules"
 
@@ -64,6 +65,21 @@ for f in "$SHARED"/agents/*.md; do
   emit_md "$f" "$CLAUDE_PLUGIN/agents/$n" "$CURSOR/agents/$n" agent
 done
 
+# Frontend workflow: same plugin, own namespace. Claude Code namespaces by
+# subdirectory (commands/frontend/discover.md -> /frontend:discover); Cursor's
+# command model is flat, so the filename carries the prefix (/frontend-discover).
+echo "==> frontend commands"
+for f in "$SHARED"/frontend/commands/*.md; do
+  n="$(basename "$f")"
+  emit_md "$f" "$CLAUDE_PLUGIN/commands/frontend/$n" "$CURSOR/commands/frontend-$n" command
+done
+
+echo "==> frontend agents"
+for f in "$SHARED"/frontend/agents/*.md; do
+  n="$(basename "$f")"
+  emit_md "$f" "$CLAUDE_PLUGIN/agents/$n" "$CURSOR/agents/$n" agent
+done
+
 echo "==> hooks (verbatim, executable in both)"
 cp "$SHARED"/hooks/*.sh "$CLAUDE_PLUGIN/hooks/"
 cp "$SHARED"/hooks/*.sh "$CURSOR/hooks/"
@@ -84,6 +100,21 @@ RULE="$ROOT/bootstrap/rules/standards.mdc"
   cat "$SHARED/standards.md"
 } > "$RULE"
 cp "$RULE" "$CURSOR/rules/standards.mdc"
+
+echo "==> rule (frontend standards) for Cursor + bootstrap"
+# Not alwaysApply: attaches when frontend files are in play, so backend repos
+# bootstrapped with the same scaffolding don't get Vue standards injected.
+FRULE="$ROOT/bootstrap/rules/frontend-standards.mdc"
+{
+  echo "---"
+  echo "description: Frontend engineering standards (Vue/Vite SPA, DDD modules, component-library-first, testing)"
+  echo "globs: **/*.vue, **/*.ts, **/*.tsx, vite.config.*"
+  echo "alwaysApply: false"
+  echo "---"
+  echo
+  cat "$SHARED/frontend/standards.md"
+} > "$FRULE"
+cp "$FRULE" "$CURSOR/rules/frontend-standards.mdc"
 
 echo "==> hook wiring"
 # Claude hook config (verify field names against your Claude Code version with /hooks)

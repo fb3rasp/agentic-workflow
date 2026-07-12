@@ -37,6 +37,30 @@ commands, agents, hooks, MCP — for Claude Code CLI) is dropped into each repo 
 Subagents: `planner`, `researcher`, `reviewer`, `pr-reviewer`.
 Hooks: `dep-age-guard` (block deps <14 days), `run-tests` (on stop), `format-changed` (on edit).
 
+## The frontend workflow
+
+A parallel command set for **Vue 3 + Vite SPA** repos (DDD modules, component-library-first,
+Ruby backend in a **sibling repo** at the same folder level — commands read the API contract
+from `../<backend>`). Claude Code: `/frontend:<name>`; Cursor: `/frontend-<name>`.
+
+```
+/frontend:discover → /frontend:analyze-patterns → /frontend:plan-feature
+    → /frontend:decompose → build → /frontend:code-structure → /frontend:review-loop
+```
+
+| Command | Does |
+|---|---|
+| `/frontend:discover` | Views/routes, components, state, backend contract; refuses to code |
+| `/frontend:analyze-patterns` | Extract CRUD/component patterns from disk + Storybook (`index.json`); ask the author which to adopt; write `plan/<feature>.patterns.md` |
+| `/frontend:plan-feature` | Risk-first plan: module layout, components, store, service/ACL layer |
+| `/frontend:decompose` | Split into stacked story branches (types → service → store → views) |
+| `/frontend:code-structure` | Component split, composables, service layer, DDD module isolation |
+| `/frontend:review-loop` | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
+
+PR flow and handoff reuse the `engineer:` commands. Frontend subagents: `frontend-planner`,
+`frontend-reviewer`, `pattern-analyst`. Standards rule: `frontend-standards.mdc`
+(glob-scoped to frontend files, not `alwaysApply`).
+
 ## Not part of this repo
 
 **Cursor skills** (`~/.cursor/skills-cursor/` — e.g. babysit, split-to-prs, sdk) are a
@@ -50,6 +74,7 @@ independent.
 ```
 shared/                  # SOURCE OF TRUTH — author here only
   standards.md   commands/   agents/   hooks/   mcp.json
+  frontend/              # frontend workflow: standards.md, commands/, agents/
 build/
   sync.sh                # regenerates the committed packages from shared/
   frontmatter/

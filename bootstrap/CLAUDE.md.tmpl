@@ -67,6 +67,33 @@ The workflow table above uses the short names; in Claude Code prefix them with
 - **Plugin link-backs:** `.claude/agentic-workflow-plugin/` and
   `.cursor/agentic-workflow-plugin/` — symlinked by bootstrap.
 
+## Frontend workflow (Vue/Vite SPA repos)
+
+For SPA repos there is a parallel `frontend` command set. Repo topology convention: the
+SPA and its Ruby backend are sibling repos at the same folder level — commands read the
+API contract from `../<backend>` instead of guessing.
+
+```
+/frontend:discover → /frontend:analyze-patterns → /frontend:plan-feature
+    → /frontend:decompose → build → /frontend:code-structure → /frontend:review-loop
+                                        ↘ /engineer:create-pr → /engineer:review-pr → /engineer:pr-review-loop
+                                        ↘ /engineer:handoff (before clearing)
+```
+
+| Command | Phase | Does |
+|---|---|---|
+| `/frontend:discover` | Discovery | Views/routes, components, state, backend contract; refuses to code |
+| `/frontend:analyze-patterns` | Plan | Extract CRUD/component patterns from disk + Storybook; ask which to adopt; write `plan/<feature>.patterns.md` |
+| `/frontend:plan-feature` | Plan | Risk-first plan: module layout, components, store, service/ACL layer |
+| `/frontend:decompose` | Plan | Split into stacked story branches (types → service → store → views) |
+| `/frontend:code-structure` | Build | Component split, composables, service layer, DDD module isolation |
+| `/frontend:review-loop` | Review | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
+
+PR flow and handoff reuse the `engineer:` commands. In Cursor the same commands are flat
+with a prefix: `/frontend-discover`, `/frontend-analyze-patterns`, … Frontend standards:
+`.cursor/rules/frontend-standards.mdc`. Subagents: `frontend-planner`, `frontend-reviewer`,
+`pattern-analyst`.
+
 ## Agents
 Subagents (`planner`, `researcher`, `reviewer`, `pr-reviewer`) are available for
 specialised work — in Claude Code they load natively from `.claude/agents/`; in Cursor
