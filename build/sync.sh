@@ -80,6 +80,13 @@ for f in "$SHARED"/frontend/agents/*.md; do
   emit_md "$f" "$CLAUDE_PLUGIN/agents/$n" "$CURSOR/agents/$n" agent
 done
 
+# Cross-namespace commands: authored once in shared/commands/ (so the engineer
+# set has them via the loop above), additionally served in the frontend set.
+echo "==> cross-namespace commands"
+for n in enterprise-review.md; do
+  emit_md "$SHARED/commands/$n" "$CLAUDE_PLUGIN/commands/frontend/$n" "$CURSOR/commands/frontend-$n" command
+done
+
 echo "==> hooks (verbatim, executable in both)"
 cp "$SHARED"/hooks/*.sh "$CLAUDE_PLUGIN/hooks/"
 cp "$SHARED"/hooks/*.sh "$CURSOR/hooks/"

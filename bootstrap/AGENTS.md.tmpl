@@ -15,6 +15,10 @@ Definitions are symlinked by `bootstrap/install.sh`:
 | **researcher** | Library or API research would bloat the main thread |
 | **reviewer** | A findings-only code review is needed before fixing (e.g. during `/review-loop`) |
 | **pr-reviewer** | A scored PR review (0–5, eight dimensions) before posting a PR comment |
+| **enterprise-reviewer** | A deep principles audit (DDD, modularity, dependency hygiene, OO, security) during `/enterprise-review` |
+| **frontend-planner** | A risk-first frontend roadmap (Vue/Vite, DDD modules) during `/frontend:plan-feature` |
+| **frontend-reviewer** | A findings-only frontend review (reactivity, a11y, library-first) during `/frontend:review-loop` |
+| **pattern-analyst** | Extracting existing CRUD/component/store patterns during `/frontend:analyze-patterns` |
 
 ## Definitions
 
@@ -22,3 +26,7 @@ Definitions are symlinked by `bootstrap/install.sh`:
 @.cursor/agents/researcher.md
 @.cursor/agents/reviewer.md
 @.cursor/agents/pr-reviewer.md
+@.cursor/agents/enterprise-reviewer.md
+@.cursor/agents/frontend-planner.md
+@.cursor/agents/frontend-reviewer.md
+@.cursor/agents/pattern-analyst.md

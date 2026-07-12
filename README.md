@@ -27,6 +27,7 @@ commands, agents, hooks, MCP — for Claude Code CLI) is dropped into each repo 
 | `/decompose-to-userstories` | Plan | Turns plan + stacked PRs into JIRA-ready EPICs and per-PR user stories in `plan/` |
 | `/code-structure` | Build | Dedupe → service layer; enforces domain isolation |
 | `/review-loop` | Review | review → fix → re-test until clean + green |
+| `/enterprise-review` | Review | Deep principles audit: DDD, modularity & cohesion, dependency hygiene (no cycles), OO design, security — verdict per dimension, advisory; report to `plan/<slug>.enterprise-review.md` |
 | `/create-pr` | Review | Open GitHub PR; write `plan/<slug>.pr-review.md` |
 | `/review-pr` | Review | Score PR 0–5 (min of 8 dims); post PR comment |
 | `/pr-review-loop` | Review | Confirm each iteration; fix, push, re-review until 5/5 or cap |
@@ -34,7 +35,7 @@ commands, agents, hooks, MCP — for Claude Code CLI) is dropped into each repo 
 | `/architecture-review` | Review | Flags drift in a diff vs. `docs/architecture/` |
 | `/handoff` | Any | Persists context to disk before clearing a heavy thread |
 
-Subagents: `planner`, `researcher`, `reviewer`, `pr-reviewer`.
+Subagents: `planner`, `researcher`, `reviewer`, `pr-reviewer`, `enterprise-reviewer`.
 Hooks: `dep-age-guard` (block deps <14 days), `run-tests` (on stop), `format-changed` (on edit).
 
 ## The frontend workflow
@@ -59,6 +60,7 @@ contract from the backend repo. Claude Code: `/frontend:<name>`; Cursor: `/front
 | `/frontend:decompose` | Split into stacked story branches (types → service → store → views) |
 | `/frontend:code-structure` | Component split, composables, service layer, DDD module isolation |
 | `/frontend:review-loop` | Review (reactivity, a11y, library-first, tests) → fix → re-test until green |
+| `/frontend:enterprise-review` | Deep principles audit (shared with the engineer set) |
 
 PR flow and handoff reuse the `engineer:` commands. Frontend subagents: `frontend-planner`,
 `frontend-reviewer`, `pattern-analyst`. Standards rule: `frontend-standards.mdc`
