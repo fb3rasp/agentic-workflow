@@ -1,5 +1,5 @@
 ---
-description: Dedupe pass — pull repeated logic into the service layer, enforce domain isolation 
+description: Dedupe pass — pull repeated logic into the service layer, enforce domain isolation
 ---
 
 Inspect the code changed in this session (or the path given) for structural smells and

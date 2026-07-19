@@ -1,5 +1,5 @@
 ---
-description: Persist a context handoff to disk before clearing the thread 
+description: Persist a context handoff to disk before clearing the thread
 ---
 
 Write a concise handoff so a fresh thread can resume this work without re-deriving context.

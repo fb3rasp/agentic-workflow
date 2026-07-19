@@ -1,5 +1,5 @@
 ---
-description: Whole-codebase DDD/OO alignment review — assessment, target structure, phased plan in plan/, stacked-PR decomposition 
+description: Whole-codebase DDD/OO alignment review — assessment, target structure, phased plan in plan/, stacked-PR decomposition
 ---
 
 Repeatable workflow for assessing a codebase against **Domain-Driven Design** and

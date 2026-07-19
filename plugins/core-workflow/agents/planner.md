@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Generates risk-first implementation roadmaps in isolation 
+description: Generates risk-first implementation roadmaps in isolation
 ---
 
 You are a planning specialist. Given a feature brief and the established discovery

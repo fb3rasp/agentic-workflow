@@ -1,4 +1,6 @@
-<!-- description: Iterate review -> fix -> re-test on a frontend change until clean and green -->
+---
+description: Iterate review -> fix -> re-test on a frontend change until clean and green
+---
 
 Run an autonomous review-and-fix loop on the current frontend change (or referenced PR).
 Use the **frontend-reviewer** subagent for the review pass.

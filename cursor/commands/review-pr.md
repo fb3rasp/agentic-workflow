@@ -1,5 +1,5 @@
 ---
-description: Score a GitHub PR 0–5 (min of 8 dimensions), post review comment — findings only 
+description: Score a GitHub PR 0–5 (min of 8 dimensions), post review comment — findings only
 ---
 
 Review a GitHub pull request using the **pr-reviewer** rubric. **Do not edit code** in

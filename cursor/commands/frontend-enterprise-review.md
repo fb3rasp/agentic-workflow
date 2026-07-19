@@ -1,5 +1,5 @@
 ---
-description: Enterprise architecture review — DDD, modularity, dependency hygiene, OO design, security; verdict per dimension 
+description: Enterprise architecture review — DDD, modularity, dependency hygiene, OO design, security; verdict per dimension
 ---
 
 Run a deep, principles-based review of the current change (or referenced PR / diff / path).

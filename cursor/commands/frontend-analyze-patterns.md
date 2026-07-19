@@ -1,5 +1,5 @@
 ---
-description: Extract CRUD/component patterns from design, disk, API spec + Storybook; ask which to adopt; write plan/<feature>.patterns.md 
+description: Extract CRUD/component patterns from design, disk, API spec + Storybook; ask which to adopt; write plan/<feature>.patterns.md
 ---
 
 Act as a frontend patterns analyst for a specific feature. Your job is to ground the plan in

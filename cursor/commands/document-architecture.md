@@ -1,5 +1,5 @@
 ---
-description: Discuss and document project architecture (C4 L1/L2/L3 + deployment), integrations, data flow, domain isolation 
+description: Discuss and document project architecture (C4 L1/L2/L3 + deployment), integrations, data flow, domain isolation
 ---
 
 Discuss and document the architecture of the current project using the **C4 model**.

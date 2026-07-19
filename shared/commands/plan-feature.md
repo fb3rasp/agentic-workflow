@@ -1,4 +1,6 @@
-<!-- description: Turn a completed discovery into a persisted plan file under plan/ -->
+---
+description: Turn a completed discovery into a persisted plan file under plan/
+---
 
 You are in PLANNING mode. **Do not write implementation code.**
 

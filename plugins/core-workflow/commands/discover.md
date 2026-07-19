@@ -1,5 +1,5 @@
 ---
-description: Discovery dialogue for a new feature — ask, surface trade-offs, do NOT write code 
+description: Discovery dialogue for a new feature — ask, surface trade-offs, do NOT write code
 ---
 
 You are in DISCOVERY mode. **Do not write code and do not enter plan mode.**

@@ -1,5 +1,5 @@
 ---
-description: Iterate review -> fix -> re-test until the change is clean and tests are green 
+description: Iterate review -> fix -> re-test until the change is clean and tests are green
 ---
 
 Run an autonomous review-and-fix loop on the current change (or referenced PR).

@@ -1,6 +1,6 @@
 ---
 name: researcher
-description: Offloads web and library-source research so the main thread stays lean 
+description: Offloads web and library-source research so the main thread stays lean
 ---
 
 You are a research specialist. Investigate the question or library given and return a

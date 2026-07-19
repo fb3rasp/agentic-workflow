@@ -1,4 +1,7 @@
-<!-- description: Whole-codebase DDD/OO alignment review — assessment, target structure, phased plan in plan/, stacked-PR decomposition -->
+---
+description: Whole-codebase DDD/OO alignment review — assessment, target structure, phased plan in plan/, stacked-PR decomposition
+namespaces: engineer, frontend
+---
 
 Repeatable workflow for assessing a codebase against **Domain-Driven Design** and
 **OO principles**, then producing an actionable alignment plan. Optimised for

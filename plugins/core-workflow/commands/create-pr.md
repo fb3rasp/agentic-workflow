@@ -1,5 +1,5 @@
 ---
-description: Push branch, open GitHub PR, write plan/<slug>.pr-review.md — confirm first 
+description: Push branch, open GitHub PR, write plan/<slug>.pr-review.md — confirm first
 ---
 
 Open a GitHub pull request for the current branch. **Do not review or score** — use

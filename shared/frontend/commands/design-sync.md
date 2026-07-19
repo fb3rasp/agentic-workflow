@@ -1,4 +1,6 @@
-<!-- description: Publish the component catalog to the Claude Design project — incremental, approval-gated (Claude Code only) -->
+---
+description: Publish the component catalog to the Claude Design project — incremental, approval-gated (Claude Code only)
+---
 
 Publish the SPA's component library to the **Claude Design project** so claude.ai/design
 sessions compose mockups from real components — and so the catalog stays current as new

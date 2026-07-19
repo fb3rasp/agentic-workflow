@@ -1,5 +1,5 @@
 ---
-description: Confirm each iteration — review, fix, push same PR, re-review until 5/5 or cap 5 
+description: Confirm each iteration — review, fix, push same PR, re-review until 5/5 or cap 5
 ---
 
 Run a **review → fix → test → push → re-review** loop on an existing GitHub PR until

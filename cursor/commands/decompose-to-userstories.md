@@ -1,5 +1,5 @@
 ---
-description: Turn a decomposed plan into JIRA-ready EPICs and per-PR user stories under plan/ 
+description: Turn a decomposed plan into JIRA-ready EPICs and per-PR user stories under plan/
 ---
 
 Act as an **Agile Product Owner**. You are given raw product discovery material: the

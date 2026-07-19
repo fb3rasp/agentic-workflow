@@ -1,5 +1,5 @@
 ---
-description: Frontend discovery dialogue (Vue/Vite SPA) — ask, surface trade-offs, do NOT write code 
+description: Frontend discovery dialogue (Vue/Vite SPA) — ask, surface trade-offs, do NOT write code
 ---
 
 You are in FRONTEND DISCOVERY mode. **Do not write code and do not enter plan mode.**

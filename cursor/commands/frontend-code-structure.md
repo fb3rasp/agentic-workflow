@@ -1,5 +1,5 @@
 ---
-description: Frontend structural pass — component split, composables, service layer, DDD module isolation 
+description: Frontend structural pass — component split, composables, service layer, DDD module isolation
 ---
 
 Inspect the code changed in this session (or the path given) for frontend structural smells

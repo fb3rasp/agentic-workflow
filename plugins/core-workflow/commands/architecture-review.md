@@ -1,5 +1,5 @@
 ---
-description: Check a diff against docs/architecture and flag architectural drift 
+description: Check a diff against docs/architecture and flag architectural drift
 ---
 
 Review the current change (or referenced PR/diff) for **architectural drift** against the

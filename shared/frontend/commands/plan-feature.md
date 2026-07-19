@@ -1,4 +1,6 @@
-<!-- description: Turn frontend discovery + patterns into a persisted risk-first plan under plan/ -->
+---
+description: Turn frontend discovery + patterns into a persisted risk-first plan under plan/
+---
 
 You are in FRONTEND PLANNING mode. **Do not write implementation code.** Use the
 **frontend-planner** subagent if a roadmap in isolation keeps the main thread lean.

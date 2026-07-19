@@ -1,4 +1,6 @@
-<!-- description: Split a plan into stacked PRs with a <1,000-line budget each -->
+---
+description: Split a plan into stacked PRs with a <1,000-line budget each
+---
 
 Take the referenced plan (in `plan/`) and decompose it into a sequence of **stacked
 pull requests**.

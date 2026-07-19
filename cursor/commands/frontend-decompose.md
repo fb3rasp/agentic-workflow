@@ -1,5 +1,5 @@
 ---
-description: Split a frontend plan into stacked story branches (<1,000 lines each) 
+description: Split a frontend plan into stacked story branches (<1,000 lines each)
 ---
 
 Take the referenced plan (in `plan/`) and decompose it into a sequence of **stacked story
