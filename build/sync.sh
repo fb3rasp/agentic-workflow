@@ -33,31 +33,83 @@ mkdir -p "$ROOT/.claude-plugin" \
          "$CURSOR/.cursor-plugin" \
          "$CURSOR/commands" "$CURSOR/agents" "$CURSOR/hooks" "$CURSOR/rules"
 
-# --- extract "<!-- description: ... -->" from line 1 of a shared md file ------
-desc_of() { sed -n '1s/<!-- *description: *\(.*\) *-->/\1/p' "$1"; }
-# --- body = everything after the marker line (and a leading blank line) -------
-body_of() { tail -n +2 "$1" | sed '1{/^$/d;}'; }
+# --- frontmatter helpers ------------------------------------------------------
+# Authored files start with a FLAT YAML frontmatter block (key: value scalars,
+# comma-separated strings for lists — no nesting):
+#   ---
+#   description: <one line, required>
+#   namespaces: engineer, frontend      # commands in shared/commands/ only
+#   tools: Read, Grep, Glob, Bash       # agents; Claude package only
+#   ---
+fm_get() { # $1=file  $2=key — trimmed value, empty if absent
+  awk -v key="$2" '
+    NR==1 { if ($0=="---") { infm=1; next } else exit }
+    infm && $0=="---" { exit }
+    infm && index($0, key ":")==1 {
+      v=substr($0, length(key)+2)
+      gsub(/^[ \t]+|[ \t]+$/, "", v)
+      print v; exit
+    }
+  ' "$1"
+}
+fm_keys() { # keys present in the frontmatter block
+  awk 'NR==1&&$0=="---"{f=1;next} f&&$0=="---"{exit} f&&/^[A-Za-z_-]+:/{sub(/:.*/,"");print}' "$1"
+}
+body_of() { # everything after the closing --- (one leading blank line stripped)
+  awk '
+    NR==1 && $0=="---" { infm=1; next }
+    infm  && $0=="---" { infm=0; body=1; first=1; next }
+    body { if (first && $0=="") { first=0; next }; first=0; print }
+  ' "$1"
+}
+validate_fm() { # $1=file — line-1 "---" and a non-empty description, known keys only
+  local f="$1" k
+  if [ "$(sed -n '1p' "$f")" != "---" ] || [ -z "$(fm_get "$f" description)" ]; then
+    echo "ERROR: missing/invalid frontmatter (need line-1 '---' and a description:) in $f" >&2
+    exit 1
+  fi
+  for k in $(fm_keys "$f"); do
+    case "$k" in
+      description|namespaces|tools|model|argument-hint) ;;
+      *) echo "warn: unknown frontmatter key '$k' in $f — ignored" >&2 ;;
+    esac
+  done
+}
 
 emit_md() { # $1=src  $2=claude_dest  $3=cursor_dest  $4=kind(command|agent)
   local src="$1" cdest="$2" udest="$3" kind="$4"
-  local name desc body
+  local name desc body tools model arghint
+  validate_fm "$src"
   name="$(basename "$src" .md)"
-  desc="$(desc_of "$src")"
-  if [ -z "$desc" ]; then
-    echo "ERROR: missing '<!-- description: ... -->' marker on line 1 of $src" >&2
-    exit 1
-  fi
+  desc="$(fm_get "$src" description)"
+  tools="$(fm_get "$src" tools)"
+  model="$(fm_get "$src" model)"
+  arghint="$(fm_get "$src" argument-hint)"
   body="$(body_of "$src")"
-  for dest in "$cdest" "$udest"; do
-    {
-      echo "---"
-      [ "$kind" = "agent" ] && echo "name: $name"
-      echo "description: $desc"
-      echo "---"
-      echo
-      echo "$body"
-    } > "$dest"
-  done
+  # Claude package — full field passthrough
+  {
+    echo "---"
+    [ "$kind" = "agent" ] && echo "name: $name"
+    echo "description: $desc"
+    if [ "$kind" = "agent" ]; then
+      [ -n "$tools" ] && echo "tools: $tools"
+      [ -n "$model" ] && echo "model: $model"
+    else
+      [ -n "$arghint" ] && echo "argument-hint: $arghint"
+    fi
+    echo "---"
+    echo
+    echo "$body"
+  } > "$cdest"
+  # Cursor package — name/description only (Claude-specific fields dropped)
+  {
+    echo "---"
+    [ "$kind" = "agent" ] && echo "name: $name"
+    echo "description: $desc"
+    echo "---"
+    echo
+    echo "$body"
+  } > "$udest"
 }
 
 echo "==> commands"
@@ -87,11 +139,16 @@ for f in "$SHARED"/frontend/agents/*.md; do
   emit_md "$f" "$CLAUDE_PLUGIN/agents/$n" "$CURSOR/agents/$n" agent
 done
 
-# Cross-namespace commands: authored once in shared/commands/ (so the engineer
-# set has them via the loop above), additionally served in the frontend set.
-echo "==> cross-namespace commands"
-for n in enterprise-review.md review-ddd-architecture.md; do
-  emit_md "$SHARED/commands/$n" "$CLAUDE_PLUGIN/commands/frontend/$n" "$CURSOR/commands/frontend-$n" command
+# Cross-namespace commands: declared at the file via "namespaces: engineer, frontend"
+# (shared/commands/ default is engineer-only; the engineer emission happened above).
+echo "==> cross-namespace commands (namespaces: ... frontend)"
+for f in "$SHARED"/commands/*.md; do
+  case ",$(fm_get "$f" namespaces | tr -d ' ')," in
+    *,frontend,*)
+      n="$(basename "$f")"
+      emit_md "$f" "$CLAUDE_PLUGIN/commands/frontend/$n" "$CURSOR/commands/frontend-$n" command
+      ;;
+  esac
 done
 
 echo "==> hooks (shared verbatim in both; cursor/ adapters Cursor-only)"

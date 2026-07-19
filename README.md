@@ -209,9 +209,32 @@ Every push/PR runs `.github/workflows/ci.yml`:
 
 ## Authoring conventions
 
-- Each `commands/*.md` and `agents/*.md` begins with a single marker line:
-  `<!-- description: ... -->`. `sync.sh` turns that into per-harness frontmatter; the
-  rest of the file is the prompt body, shared verbatim.
+- Each `commands/*.md` and `agents/*.md` begins with a **flat YAML frontmatter block** —
+  the standard both harnesses define natively, so authored files are valid definitions in
+  their own right:
+
+  ```markdown
+  ---
+  description: <one line, required>
+  namespaces: engineer, frontend    # optional, commands in shared/commands/ only —
+                                    # adds emission into the frontend set
+  tools: Read, Grep, Glob, Bash     # optional, agents only — Claude package tool allowlist
+  model: <model>                    # optional, agents only — Claude package
+  argument-hint: <hint>             # optional, commands only — Claude package
+  ---
+  ```
+
+  Flat `key: value` scalars only (comma-separated strings for lists — Claude Code's own
+  `tools:` format); no nesting. `sync.sh` validates (missing description fails the build,
+  unknown keys warn) and maps fields per harness: the Claude package gets everything, the
+  Cursor package gets `name`/`description` (Claude-specific fields are dropped). Agent
+  `name` is always derived from the filename. The rest of the file is the prompt body,
+  shared verbatim.
+- The findings-only agents (`reviewer`, `pr-reviewer`, `enterprise-reviewer`,
+  `frontend-reviewer`, `pattern-analyst`, `researcher`) carry read-only `tools:`
+  allowlists, so "do not edit code" is structurally enforced in Claude Code, not just
+  prose. Honest limitation: `Bash` stays on the list (diffs and `gh` need it), and shell
+  can write files — this removes the Edit/Write **tools**, it is not a sandbox.
 - Hook **logic** is plain `bash`, shared verbatim in both harnesses. The response
   protocols differ: Claude Code blocks via exit code 2; Cursor expects a JSON verdict
   on stdout (`permission`, `followup_message`). Thin adapters in `shared/hooks/cursor/`

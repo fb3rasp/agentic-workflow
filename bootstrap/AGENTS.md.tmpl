@@ -20,6 +20,11 @@ Definitions are symlinked by `bootstrap/install.sh`:
 | **frontend-reviewer** | A findings-only frontend review (reactivity, a11y, library-first) during `/frontend:review-loop` |
 | **pattern-analyst** | Extracting existing CRUD/component/store patterns during `/frontend:analyze-patterns` |
 
+The findings-only agents (reviewer, pr-reviewer, enterprise-reviewer, frontend-reviewer,
+pattern-analyst, researcher) are **tool-restricted in Claude Code** via `tools:`
+frontmatter — they can read, search, and run shell (for diffs/`gh`), but the Edit/Write
+tools are withheld.
+
 ## Definitions
 
 @.cursor/agents/planner.md
