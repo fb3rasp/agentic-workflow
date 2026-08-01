@@ -72,24 +72,56 @@ blocked=()
 for pkg in "${PKGS[@]}"; do
   case "$pkg" in ./*|/*|*://*|.) continue ;; esac   # skip local paths/urls
 
-  # strip version specifier: lodash@1.2.3 -> lodash, @scope/pkg@1.2.3 -> @scope/pkg
+  # split name from version specifier:
+  #   lodash            -> lodash          (no pin)
+  #   lodash@1.2.3      -> lodash          pin 1.2.3
+  #   @scope/pkg@1.2.3  -> @scope/pkg      pin 1.2.3
   if [ "${pkg:0:1}" = "@" ]; then
     rest="${pkg:1}"
     case "$rest" in
-      *@*) name="@${rest%@*}" ;;
-      *)   name="$pkg" ;;
+      *@*) name="@${rest%@*}"; want="${rest##*@}" ;;
+      *)   name="$pkg";        want="" ;;
     esac
   else
-    name="${pkg%@*}"
+    case "$pkg" in
+      *@*) name="${pkg%@*}"; want="${pkg##*@}" ;;
+      *)   name="$pkg";      want="" ;;
+    esac
   fi
 
-  # npm registry: publish time of the latest version ("/" in scoped names -> %2F)
+  # Only an exact version is a pin. Ranges and dist-tags (^1.2.3, ~1.2, latest,
+  # next, *) can all resolve to something published minutes ago, so they are
+  # judged by the latest version, as before.
+  case "$want" in
+    ''|*[!0-9.]*) want="" ;;
+  esac
+
+  # npm registry: publish time of the version that would actually be installed
+  # ("/" in scoped names -> %2F).
+  #
+  # Checking the pinned version rather than always the latest is the point: the
+  # policy is about installing freshly published code, and `pkg@1.61.1` does not
+  # install anything published today just because the project shipped 1.62.1
+  # this morning. Judging a pin by dist-tags.latest blocks every dependency on a
+  # fortnightly release train regardless of which version is asked for.
   published=""
+  checked=""
   if command -v curl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
     meta="$(curl -fsSL "https://registry.npmjs.org/${name/\//%2F}" 2>/dev/null)"
     if [ -n "$meta" ]; then
-      latest="$(printf '%s' "$meta" | jq -r '."dist-tags".latest // empty')"
-      [ -n "$latest" ] && published="$(printf '%s' "$meta" | jq -r --arg v "$latest" '.time[$v] // empty')"
+      if [ -n "$want" ]; then
+        published="$(printf '%s' "$meta" | jq -r --arg v "$want" '.time[$v] // empty')"
+        [ -n "$published" ] && checked="$want"
+      fi
+      # No pin, or a pin the registry does not know: fall back to latest, which
+      # is the conservative reading rather than a free pass.
+      if [ -z "$published" ]; then
+        latest="$(printf '%s' "$meta" | jq -r '."dist-tags".latest // empty')"
+        if [ -n "$latest" ]; then
+          published="$(printf '%s' "$meta" | jq -r --arg v "$latest" '.time[$v] // empty')"
+          checked="latest ${latest}"
+        fi
+      fi
     fi
   fi
   [ -z "$published" ] && continue   # can't determine age (e.g. pip) -> don't block
@@ -100,7 +132,7 @@ for pkg in "${PKGS[@]}"; do
 
   age_days=$(( (now_epoch - pub_epoch) / 86400 ))
   if [ "$age_days" -lt "$MIN_AGE_DAYS" ]; then
-    blocked+=("$name (latest published ${age_days}d ago)")
+    blocked+=("$name ($checked published ${age_days}d ago)")
   fi
 done
 
