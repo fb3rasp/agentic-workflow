@@ -19,6 +19,11 @@ Focus on:
 6. **DDD module isolation** — no module reaching into another module's store or internals;
    route cross-module access through typed public APIs or events. Ensure files map cleanly
    to `src/modules/<domain>/`.
+7. **Comments & documentation** — delete comments that just restate what the code already
+   says (a well-named identifier doesn't need one); delete stale comments and
+   commented-out code. Keep only comments that capture **the why**: a hidden constraint,
+   a non-obvious invariant, a workaround for a specific bug, or behaviour that would
+   otherwise surprise a reader.
 
 Run the test suite (Vitest) after refactoring and report what changed and why. If a refactor
 would change behaviour, stop and ask first.

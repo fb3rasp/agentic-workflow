@@ -13,6 +13,11 @@ Focus on:
    reaches into another domain's internals). Route cross-domain access through APIs or
    events.
 4. **Naming & boundaries** — ensure modules map cleanly to domains.
+5. **Comments & documentation** — delete comments that just restate what the code already
+   says (a well-named identifier doesn't need one); delete stale comments and
+   commented-out code. Keep only comments that capture **the why**: a hidden constraint,
+   a non-obvious invariant, a workaround for a specific bug, or behaviour that would
+   otherwise surprise a reader.
 
 Run the test suite after refactoring and report what changed and why. If a refactor
 would change behaviour, stop and ask first.
