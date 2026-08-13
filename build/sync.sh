@@ -115,7 +115,7 @@ emit_md() { # $1=src  $2=claude_dest  $3=cursor_dest  $4=kind(command|agent)
 echo "==> commands"
 for f in "$SHARED"/commands/*.md; do
   n="$(basename "$f")"
-  emit_md "$f" "$CLAUDE_PLUGIN/commands/$n" "$CURSOR/commands/$n" command
+  emit_md "$f" "$CLAUDE_PLUGIN/commands/$n" "$CURSOR/commands/engineer-$n" command
 done
 
 echo "==> agents"
@@ -126,7 +126,8 @@ done
 
 # Frontend workflow: same plugin, own namespace. Claude Code namespaces by
 # subdirectory (commands/frontend/discover.md -> /frontend:discover); Cursor's
-# command model is flat, so the filename carries the prefix (/frontend-discover).
+# command model is flat, so the filename carries the prefix (/engineer-discover,
+# /frontend-discover).
 echo "==> frontend commands"
 for f in "$SHARED"/frontend/commands/*.md; do
   n="$(basename "$f")"

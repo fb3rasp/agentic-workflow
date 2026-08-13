@@ -15,8 +15,9 @@
 # never from plugins), .mcp.json (project-root MCP for Claude Code).
 #
 # Cursor symlinks: .cursor/hooks/ (ACTIVE — wired by .cursor/hooks.json),
-# .cursor/commands/, .cursor/agents/ (reference; execute from plugin),
-# .cursor/agentic-workflow-mcp.json, .cursor/agentic-workflow-plugin/.
+# .cursor/agentic-workflow-mcp.json, .cursor/agentic-workflow-plugin/ (browse
+# commands/agents here — do NOT symlink into .cursor/commands/; that duplicates
+# plugin registrations). Re-run prunes stale flat command/agent symlinks.
 #
 # Claude Code symlinks (ACTIVE — Claude Code loads these natively, no plugin
 # install needed): .claude/commands/<namespace>/ (default "engineer" →
@@ -236,6 +237,21 @@ link_claude_md() { # $1=target  $2=plugin subdir (commands|agents)  $3=dest subd
   done
 }
 
+prune_flat_cursor_commands() { # $1=target — remove command/agent links that duplicate the plugin
+  local target="$1" root f subdir
+  root="$(resolve_plugin_root)"
+  [ -z "$root" ] && return 0
+  for subdir in commands agents; do
+    [ -d "$target/.cursor/$subdir" ] || continue
+    for f in "$target/.cursor/$subdir"/*.md; do
+      [ -L "$f" ] || continue
+      case "$(readlink "$f")" in
+        "$root/$subdir/"*) rm "$f"; echo "  removed (duplicate of plugin): $f" ;;
+      esac
+    done
+  done
+}
+
 prune_flat_claude_commands() { # $1=target — remove pre-namespace flat command links
   local target="$1" root f
   root="$(resolve_claude_plugin_root)"
@@ -330,10 +346,9 @@ mkdir -p "$TARGET/plan"
 [ -e "$TARGET/plan/.gitkeep" ] || touch "$TARGET/plan/.gitkeep"
 echo "  ensured: $TARGET/plan/"
 
-echo "==> link Cursor (commands/agents/MCP from plugin; hooks ACTIVE via .cursor/hooks.json)"
+echo "==> link Cursor (plugin root + MCP; hooks ACTIVE via .cursor/hooks.json)"
 link_plugin_root "$TARGET"
-link_plugin_md "$TARGET" commands AGENTIC_WORKFLOW_COMMANDS "commands"
-link_plugin_md "$TARGET" agents   AGENTIC_WORKFLOW_AGENTS   "agents"
+prune_flat_cursor_commands "$TARGET"
 link_plugin_hooks "$TARGET"
 write_cursor_hooks "$TARGET"
 link_plugin_mcp "$TARGET"
@@ -358,8 +373,11 @@ fi
 [ "$CLAUDE_PLUGIN_FOUND" -eq 0 ] && echo "warn: Claude plugin source missing — .claude/ links skipped." >&2
 
 echo "Done."
-echo "  Cursor:      commands/agents/MCP execute from the installed plugin; hooks run"
-echo "               FROM THIS PROJECT — .cursor/hooks.json wires the .cursor/hooks/ links."
+echo "  Cursor:      slash commands execute from the installed plugin only"
+echo "               (/engineer-discover, /engineer-plan-feature, /frontend-plan-feature, …)."
+echo "               Browse defs at .cursor/agentic-workflow-plugin/ — do not symlink"
+echo "               .cursor/commands/ (duplicates). Hooks run FROM THIS PROJECT via"
+echo "               .cursor/hooks.json → .cursor/hooks/."
 echo "  Claude Code: commands load from .claude/commands/$CLAUDE_NS/ — type /$CLAUDE_NS and"
 echo "               tab to browse (/$CLAUDE_NS:discover, /$CLAUDE_NS:plan-feature, ...)."
 echo "               Frontend workflow: .claude/commands/frontend/ (/frontend:discover,"

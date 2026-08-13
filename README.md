@@ -46,7 +46,8 @@ Ruby backend in a separate repo). Locations are declared **per project** in a "P
 table in the bootstrapped `CLAUDE.md` — SPA source root, backend repo, component-library/
 Storybook URL, **backend API spec** (OpenAPI/Swagger, path or URL — the contract is resolved
 spec-first with routes/controllers as fallback and drift flagged), and the **Claude Design
-project**. Claude Code: `/frontend:<name>`; Cursor: `/frontend-<name>`.
+project**. Claude Code: `/frontend:<name>`; Cursor: `/frontend-<name>`. Engineer
+commands: Claude Code `/engineer:<name>`; Cursor: `/engineer-<name>`.
 
 The workflow supports a **catalog-first design round trip**: `/frontend:design-sync`
 publishes the component library to a claude.ai/design design-system project; mockups are
@@ -170,17 +171,18 @@ git clone …/agentic-workflow && cd agentic-workflow
 | `.claude/agents/*.md` | Claude plugin subagent prompts | **active** |
 | `.claude/hooks/*.sh` | Claude plugin hook scripts | **active** |
 | `.claude/agentic-workflow-plugin/` | Claude plugin root (link-back) | reference |
-| `.cursor/commands/*.md` | Cursor plugin slash-command prompts | reference |
-| `.cursor/agents/*.md` | Cursor plugin subagent prompts | reference |
+| `.cursor/agentic-workflow-plugin/` | Cursor plugin root — browse commands/agents here | reference |
 | `.cursor/hooks/*.sh` | Cursor plugin hook scripts + adapters | **active** (wired by `.cursor/hooks.json`) |
 | `.cursor/agentic-workflow-mcp.json` | Cursor plugin MCP config | reference |
-| `.cursor/agentic-workflow-plugin/` | Cursor plugin root (link-back) | reference |
 
 In Claude Code the commands are **namespaced**: typing `/engineer` tab-completes the
 whole group (`/engineer:discover`, `/engineer:plan-feature`, `/engineer:decompose`, …).
 Override the namespace with `AGENTIC_WORKFLOW_NAMESPACE=<name>` when running
 `install.sh` (re-running migrates old flat `.claude/commands/*.md` links into the
-namespace dir). Cursor commands stay unnamespaced (`/discover`, …).
+namespace dir). Cursor uses the same bounded-context idea with hyphen prefixes:
+`/engineer-discover`, `/engineer-plan-feature`, `/frontend-plan-feature`, … — loaded
+from the installed plugin only. Do **not** symlink into `.cursor/commands/`; that
+registers duplicates. Re-run `install.sh` to prune stale flat symlinks.
 
 `install.sh` **verifies** a plugin source exists and exits non-zero if none is found.
 Cursor resolution: `AGENTIC_WORKFLOW_PLUGIN` → installed local plugin → clone's

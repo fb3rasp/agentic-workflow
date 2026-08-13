@@ -60,12 +60,13 @@ Slash commands load natively in each harness after bootstrap:
 - **Claude Code:** `.claude/commands/engineer/<name>.md` — loaded as namespaced project
   commands. Type `/engineer` and tab-complete the group: `/engineer:discover`,
   `/engineer:plan-feature`, `/engineer:decompose`, … No `/plugin install` needed.
-- **Cursor:** unnamespaced (`/discover`, `/plan-feature`, …) from the installed plugin
-  (`~/.cursor/plugins/local/agentic-workflow/`); `.cursor/commands/<name>.md` are
-  reference symlinks for browsing.
+- **Cursor:** `/engineer-<name>` and `/frontend-<name>` from the installed plugin
+  (`~/.cursor/plugins/local/agentic-workflow/`). Browse defs at
+  `.cursor/agentic-workflow-plugin/` — do not symlink into `.cursor/commands/` (duplicates).
 
 The workflow table above uses the short names; in Claude Code prefix them with
-`engineer:` (e.g. `/discover` → `/engineer:discover`).
+`engineer:` (e.g. `/discover` → `/engineer:discover`); in Cursor use hyphens
+(e.g. `/discover` → `/engineer-discover`, `/frontend:plan-feature` → `/frontend-plan-feature`).
 - **Plugin link-backs:** `.claude/agentic-workflow-plugin/` and
   `.cursor/agentic-workflow-plugin/` — symlinked by bootstrap.
 
@@ -113,8 +114,8 @@ unset: SPA and backend as sibling repos at the same folder level.
 | `/frontend:review-ddd-architecture` | Any | Whole-codebase DDD/OO alignment review (shared with the engineer set) |
 | `/frontend:design-sync` | Design | Publish the component catalog to the Claude Design project (incremental; Claude Code only) |
 
-PR flow and handoff reuse the `engineer:` commands. In Cursor the same commands are flat
-with a prefix: `/frontend-discover`, `/frontend-analyze-patterns`, … Frontend standards:
+PR flow and handoff reuse the `engineer:` commands. In Cursor the same commands use
+hyphen prefixes: `/engineer-create-pr`, `/frontend-discover`, … Frontend standards:
 `.cursor/rules/frontend-standards.mdc`. Subagents: `frontend-planner`, `frontend-reviewer`,
 `pattern-analyst`.
 
